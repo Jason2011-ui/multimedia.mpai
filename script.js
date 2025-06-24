@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     navLinks.classList.toggle('show');
     overlay.classList.toggle('show');
   });
+
   overlay.addEventListener('click', () => {
     navLinks.classList.remove('show');
     overlay.classList.remove('show');
@@ -58,9 +59,18 @@ document.addEventListener('DOMContentLoaded', () => {
       <section class="section">
         <h2>🌐 Sosial Media Kami</h2>
         <div class="sosmed-icons">
-          <a href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/174/174855.png"><span>@mpai.multigen</span></a>
-          <a href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png"><span>@mm.mtsplusalishlah</span></a>
-          <a href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png"><span>Multimedia Channel</span></a>
+          <a href="https://instagram.com/mpai.multigen" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png">
+            <span>@mpai.multigen</span>
+          </a>
+          <a href="https://tiktok.com/@mm.mtsplusalishlah" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png">
+            <span>@mm.mtsplusalishlah</span>
+          </a>
+          <a href="https://youtube.com/@MultimediaChannel" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png">
+            <span>Multimedia Channel</span>
+          </a>
         </div>
       </section>`
   };
