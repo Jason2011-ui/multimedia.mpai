@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="card student"><img src="assets/gita.png" alt="Gita"><h4>👩‍🎓 Gita</h4><p>Penanggung Jawab Desain Grafis</p></div>
           <div class="card student"><img src="assets/nailah.png" alt="Nailah"><h4>👩‍🎓 Nailah</h4><p>Penanggung Jawab Sastra</p></div>
           <div class="card student"><img src="assets/Zahra.png" alt="Zahra"><h4>👩‍🎓 Zahra</h4><p>Penanggung Jawab Conten Creator</p></div>
-          <div class="card student"><img src="assets/rafi.jpg" alt="Azka"><h4>👨‍🎓 Azka</h4><p>Penanggung Jawab Conten Creator</p></div>
+          <div class="card student"><img src="assets/rafi.jpg" alt="Azka"><h4>👩‍🎓 Azka</h4><p>Penanggung Jawab Conten Creator</p></div>
           <div class="card student"><img src="assets/idris.png" alt="idris"><h4>👨‍🎓 M.Idris.C</h4><p>Penanggung Jawab Multimedia</p></div>
           <div class="card student"><img src="assets/mila.png" alt="Mila"><h4>👩‍🎓 Siti Farhatul Kamilah</h4><p>Penanggung Jawab Vokal</p></div>
           <div class="card student"><img src="assets/jasmine.png" alt="Jasmine"><h4>👩‍🎓 Jasmine</h4><p>Sastra</p></div>
