@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png">
             <span>@mm.mtsplusalishlah</span>
           </a>
-          <a href="https://youtube.com/@MultimediaChannel" target="_blank">
+          <a href="https://youtube.com/https://@mtsplusalishlah_official" target="_blank">
             <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png">
             <span>Multimedia Channel</span>
           </a>
