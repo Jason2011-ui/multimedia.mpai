@@ -45,9 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="student-grid">
           <div class="card student"><img src="assets/gita.png" alt="Gita"><h4>👩‍🎓 Gita</h4><p>Penanggung Jawab Desain Grafis</p></div>
-          <div class="card student"><img src="assets/aulia.jpg" alt="Aulia"><h4>👩‍🎓 Aulia</h4><p>Penanggung Jawab Desainer Grafis</p></div>
-          <div class="card student"><img src="assets/rafi.jpg" alt="Rafi"><h4>👨‍🎓 Rafi</h4><p>Penanggung Jawab Fotografer</p></div>
-          <div class="card student"><img src="assets/bima.jpg" alt="idris"><h4>👨‍🎓 M.Idris.C</h4><p>Penanggung Jawab Multimedia</p></div>
+          <div class="card student"><img src="assets/Nailah.jpg" alt="Nailah"><h4>👩‍🎓 Aulia</h4><p>Penanggung Jawab Sastra</p></div>
+          <div class="card student"><img src="assets/rafi.jpg" alt="Azka"><h4>👨‍🎓 Rafi</h4><p>Penanggung Jawab Fotografer</p></div>
+          <div class="card student"><img src="assets/idris.png" alt="idris"><h4>👨‍🎓 M.Idris.C</h4><p>Penanggung Jawab Multimedia</p></div>
           <div class="card student"><img src="assets/mila.png" alt="Mila"><h4>👩‍🎓 Siti Farhatul Kamilah</h4><p>Penanggung Jawab Vokal</p></div>
           <div class="card student"><img src="assets/jasmine.png" alt="Jasmine"><h4>👩‍🎓 Jasmine</h4><p>Sastra</p></div>
         </div>
