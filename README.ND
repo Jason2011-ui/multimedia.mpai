@@ -1,0 +1,68 @@
+LAPORAN APLIKASI ABSENSI DIGITAL MULTIMEDIA
+
+Nama aplikasi:
+Website Absensi Digital Multimedia MTs Plus Al Ishlah
+
+Tujuan aplikasi:
+Aplikasi ini dibuat untuk membantu kegiatan eskul Multimedia agar absensi, dokumentasi kegiatan, sosial media, profile anggota, rekap admin, dan latihan mengetik dapat dikelola dalam satu website.
+
+Fitur utama:
+1. Login dan daftar akun.
+2. Password dapat ditampilkan atau disembunyikan saat login dan daftar.
+3. Daftar akun memakai ulangi password agar siswa tidak salah mengetik password.
+4. Absensi digital untuk Hadir, Sakit, dan Izin.
+5. Hadir memakai QR atau kode harian dari admin.
+6. Jika kamera tidak bisa scan QR, siswa dapat memasukkan kode QR secara manual.
+7. Sakit dan Izin tidak memakai validasi lokasi.
+8. Sakit dan Izin wajib memakai catatan agar admin dapat memvalidasi alasan.
+9. Admin dapat melihat log absensi.
+10. Admin dapat rekap profile dan kehadiran.
+11. Admin dapat export data ke Excel.
+12. Admin dapat membuat QR harian otomatis.
+13. Admin dapat mengelola postingan Galery MM.
+14. Galery MM menyimpan dokumentasi kegiatan, foto, video, komentar, like, dan share.
+15. Tab Sosmed berisi link promosi sosial media resmi MM.
+16. Desktop memiliki fitur latihan mengetik 10FastFinger dan leaderboard.
+17. Mobile memakai navigasi bawah agar mudah digunakan.
+18. Desktop memakai navbar atas agar tampilan lebih rapi.
+
+Alur absensi:
+1. Admin membuat QR atau kode harian di halaman Admin.
+2. Siswa membuka halaman Absensi.
+3. Siswa memilih Hadir, Sakit, atau Izin.
+4. Jika memilih Hadir, siswa scan QR dari admin.
+5. Jika kamera tidak bisa digunakan, siswa mengetik kode QR secara manual.
+6. Jika memilih Sakit atau Izin, siswa mengisi catatan.
+7. Data masuk ke Supabase.
+8. Jika webhook Google Apps Script sudah dipasang, data juga dikirim otomatis ke Google Spreadsheet.
+
+Format data Spreadsheet:
+Nama
+Waktu
+Jenis Absen
+Username
+Tanggal
+Status
+Catatan
+Kode QR
+Waktu Sinkron
+
+Catatan integrasi Spreadsheet:
+Google Spreadsheet tidak bisa menerima data langsung hanya dari link edit biasa.
+Agar data masuk otomatis, Spreadsheet membutuhkan Google Apps Script Web App.
+File google_sheets_apps_script.js sudah disiapkan di repo.
+Setelah Apps Script di-deploy, URL Web App dimasukkan ke konstanta GOOGLE_SHEET_WEBHOOK_URL di index.html.
+
+Link Spreadsheet:
+https://docs.google.com/spreadsheets/d/1hdEFMTRURThsg8SosbPIEFP8vUeZ9_0TOrm747RztSA/edit?usp=sharing
+
+Keamanan aplikasi:
+1. Data utama disimpan di Supabase.
+2. Akses admin dibedakan dari siswa.
+3. Absensi Hadir memakai QR atau kode harian.
+4. Sakit dan Izin membutuhkan catatan agar bisa dicek admin.
+5. Password tidak ditampilkan kecuali user menekan tombol tampilkan.
+6. Saat daftar, password harus diketik ulang.
+
+Status terbaru:
+Aplikasi sudah mendukung show hide password, ulangi password saat daftar, QR hadir tanpa cek lokasi, fallback input kode QR manual, dan persiapan sinkron otomatis ke Google Spreadsheet lewat Apps Script.

@@ -363,20 +363,6 @@ BEGIN
   END IF;
 
   IF p_status = 'hadir' THEN
-    IF p_lat IS NULL OR p_lng IS NULL OR p_accuracy IS NULL THEN
-      RAISE EXCEPTION 'Lokasi wajib untuk absen hadir';
-    END IF;
-
-    IF p_accuracy > 120 THEN
-      RAISE EXCEPTION 'Akurasi GPS belum cukup: % meter', round(p_accuracy::numeric);
-    END IF;
-
-    v_distance := mm_distance_m(-6.9818, 107.6432, p_lat, p_lng);
-
-    IF v_distance > 250 THEN
-      RAISE EXCEPTION 'Lokasi di luar radius sekolah: % meter', round(v_distance::numeric);
-    END IF;
-
     SELECT code INTO v_qr_code
     FROM mm_daily_qr
     WHERE date = v_today AND active = TRUE
@@ -386,12 +372,10 @@ BEGIN
       RAISE EXCEPTION 'Kode QR harian tidak valid';
     END IF;
 
-    v_added_by := 'self | gps:' || round(v_distance::numeric)::TEXT || 'm | acc:' ||
-      round(p_accuracy::numeric)::TEXT || 'm | lat:' || round(p_lat::numeric, 6)::TEXT ||
-      ' | lng:' || round(p_lng::numeric, 6)::TEXT ||
-      CASE WHEN v_qr_code IS NOT NULL THEN ' | qr:valid' ELSE '' END ||
+    v_added_by := 'self' ||
+      CASE WHEN v_qr_code IS NOT NULL THEN ' | qr:valid' ELSE ' | qr:not-required' END ||
       CASE WHEN COALESCE(TRIM(p_note), '') <> '' THEN ' | note:' || left(regexp_replace(TRIM(p_note), '\s+', ' ', 'g'), 220) ELSE '' END ||
-      ' | validation:gps-valid-server';
+      ' | validation:qr-valid-server';
   ELSE
     IF LENGTH(TRIM(COALESCE(p_note, ''))) < 8 THEN
       RAISE EXCEPTION 'Catatan minimal 8 karakter untuk Sakit/Izin';

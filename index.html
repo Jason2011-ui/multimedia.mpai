@@ -2150,6 +2150,35 @@ tr:last-child td {
   background: #fff;
 }
 
+.password-wrap {
+  position: relative;
+}
+
+.password-wrap input {
+  width: 100%;
+  padding-right: 46px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.password-toggle:hover {
+  background: rgba(8,101,228,0.08);
+  color: var(--primary);
+}
+
 .btn-block {
   width: 100%;
   height: 46px;
@@ -2881,7 +2910,10 @@ footer p {
     </div>
     <div class="field">
       <label>Password</label>
-      <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+      <div class="password-wrap">
+        <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+        <button class="password-toggle" type="button" onclick="togglePassword('loginPass',this)" aria-label="Tampilkan password"><i class="fa-solid fa-eye"></i></button>
+      </div>
     </div>
     <button class="btn-block" onclick="doLogin()">Masuk <i class="fas fa-arrow-right"></i></button>
     <p class="modal-footer-note">Belum punya akun? <a onclick="switchOverlay('login','register')">Daftar sekarang</a></p>
@@ -2906,7 +2938,17 @@ footer p {
     </div>
     <div class="field">
       <label>Password</label>
-      <input type="password" id="regPass" placeholder="Min 6 karakter" autocomplete="new-password">
+      <div class="password-wrap">
+        <input type="password" id="regPass" placeholder="Min 6 karakter" autocomplete="new-password">
+        <button class="password-toggle" type="button" onclick="togglePassword('regPass',this)" aria-label="Tampilkan password"><i class="fa-solid fa-eye"></i></button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Ulangi Password</label>
+      <div class="password-wrap">
+        <input type="password" id="regPass2" placeholder="Ketik ulang password" autocomplete="new-password">
+        <button class="password-toggle" type="button" onclick="togglePassword('regPass2',this)" aria-label="Tampilkan password"><i class="fa-solid fa-eye"></i></button>
+      </div>
     </div>
     <button class="btn-block" onclick="doRegister()">Buat Akun <i class="fas fa-user-plus"></i></button>
     <p class="modal-footer-note">Sudah punya akun? <a onclick="switchOverlay('register','login')">Masuk</a></p>
@@ -3222,6 +3264,8 @@ footer p {
    ══════════════════════════════════════════════════ */
 const SUPABASE_URL = 'https://rqerllbcgfcvrwunvvfx.supabase.co';
 const SUPABASE_KEY  = 'sb_publishable_ZzSxctWwGU6vB4nCdsAaqQ_NcXOCl0u'; // anon/public key
+const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1hdEFMTRURThsg8SosbPIEFP8vUeZ9_0TOrm747RztSA/edit?usp=sharing';
+const GOOGLE_SHEET_WEBHOOK_URL = ''; // Isi dengan URL Apps Script Web App agar absensi otomatis masuk Spreadsheet.
 
 /* ── INIT SUPABASE ── */
 const _isConfigured = !SUPABASE_URL.includes('MASUKKAN') && !SUPABASE_KEY.includes('MASUKKAN');
@@ -3232,6 +3276,33 @@ async function callRpc(fn,args={}){
   const {data,error}=await _sb.rpc(fn,args);
   if(error)console.error(fn,error);
   return {data,error};
+}
+
+async function syncAttendanceToSpreadsheet(rec){
+  if(!GOOGLE_SHEET_WEBHOOK_URL)return {ok:false,skipped:true};
+  const payload={
+    sheetUrl:GOOGLE_SHEET_URL,
+    nama:rec.name,
+    username:rec.username,
+    waktu:new Date(rec.timestamp).toLocaleString('id-ID'),
+    tanggal:rec.date,
+    jenisAbsen:STATUS_LABELS[rec.status]||rec.status,
+    status:rec.status,
+    catatan:parseAttendanceMeta(rec.addedBy).note||'',
+    kodeQr:rec.qrCode||''
+  };
+  try{
+    await fetch(GOOGLE_SHEET_WEBHOOK_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(payload)
+    });
+    return {ok:true};
+  }catch(e){
+    console.warn('Spreadsheet sync failed',e);
+    return {ok:false,error:e};
+  }
 }
 
 /* ── INTERACTIVE DYNAMIC TEAM MEMBERS ── */
@@ -3540,7 +3611,7 @@ async function doLogin(){
     document.getElementById('loginUser').value='';
     document.getElementById('loginPass').value='';
     onLogin();
-    toast('Selamat datang, '+found.name+'!','success');
+    toast('Selamat datang, '+currentUser.name+'!','success');
   }catch(e){showErr(err,'Gagal terhubung ke server.');}
   finally{if(btn){btn.innerHTML='Masuk <i class="fas fa-arrow-right"></i>';btn.disabled=false;}}
 }
@@ -3549,13 +3620,15 @@ async function doRegister(){
   const name=document.getElementById('regName').value.trim();
   const u=document.getElementById('regUser').value.trim();
   const p=document.getElementById('regPass').value;
+  const p2=document.getElementById('regPass2').value;
   const err=document.getElementById('regErr');
   const ok=document.getElementById('regOk');
   const btn=document.querySelector('#registerModal .btn-block');
   err.style.display='none';ok.style.display='none';
-  if(!name||!u||!p){showErr(err,'Isi semua field!');return}
+  if(!name||!u||!p||!p2){showErr(err,'Isi semua field!');return}
   if(u.length<3){showErr(err,'Username minimal 3 karakter!');return}
   if(p.length<6){showErr(err,'Password minimal 6 karakter!');return}
+  if(p!==p2){showErr(err,'Ulangi password harus sama.');return}
   if(!/^[a-zA-Z0-9_]+$/.test(u)){showErr(err,'Username hanya huruf, angka, underscore!');return}
   if(btn){btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Mendaftar...';btn.disabled=true;}
   try{
@@ -3566,9 +3639,19 @@ async function doRegister(){
     document.getElementById('regName').value='';
     document.getElementById('regUser').value='';
     document.getElementById('regPass').value='';
+    document.getElementById('regPass2').value='';
     setTimeout(()=>{hideOverlay('register');showOverlay('login');},1500);
   }catch(e){showErr(err,'Gagal terhubung ke database.');}
   finally{if(btn){btn.innerHTML='Buat Akun <i class="fas fa-user-plus"></i>';btn.disabled=false;}}
+}
+
+function togglePassword(inputId,btn){
+  const input=document.getElementById(inputId);
+  if(!input)return;
+  const show=input.type==='password';
+  input.type=show?'text':'password';
+  btn.innerHTML=show?'<i class="fa-solid fa-eye-slash"></i>':'<i class="fa-solid fa-eye"></i>';
+  btn.setAttribute('aria-label',show?'Sembunyikan password':'Tampilkan password');
 }
 
 function doLogout(){
@@ -3905,7 +3988,7 @@ function buildAttendanceMeta(status,note,loc){
   const parts=['self'];
   if(loc)parts.push(`gps:${Math.round(loc.distance)}m`, `acc:${Math.round(loc.accuracy)}m`, `lat:${loc.lat.toFixed(6)}`, `lng:${loc.lng.toFixed(6)}`);
   if(note)parts.push(`note:${note.replace(/\s+/g,' ').slice(0,220)}`);
-  parts.push(`validation:${status==='hadir'?'gps-valid':'menunggu-admin'}`);
+  parts.push(`validation:${status==='hadir'?'qr-valid':'menunggu-admin'}`);
   return parts.join(' | ');
 }
 
@@ -4171,19 +4254,16 @@ async function renderAbsensi(){
         </div>`:''}
         <div class="location-card">
           <div class="location-card-head">
-            <div class="location-card-icon"><i class="fa-solid fa-location-crosshairs"></i></div>
+            <div class="location-card-icon"><i class="fa-solid fa-qrcode"></i></div>
             <div>
-              <h3>Validasi Lokasi Hadir</h3>
-              <p>GPS hanya diwajibkan untuk status Hadir. Sakit dan Izin cukup mengirim catatan, lalu admin dapat melihatnya di log/profile.</p>
+              <h3>Validasi QR Hadir</h3>
+              <p>Status Hadir memakai QR/code harian dari admin. Jika kamera tidak bisa scan, masukkan kode secara manual. Sakit dan Izin cukup mengirim catatan.</p>
             </div>
           </div>
           <div class="location-facts">
-            <div class="location-fact"><i class="fa-solid fa-school"></i><span>${SCHOOL_LOCATION.address}</span></div>
-            <div class="location-fact"><i class="fa-solid fa-satellite-dish"></i><span>Akurasi GPS minimum ${MAX_LOCATION_ACCURACY_M} meter</span></div>
-            <div class="location-fact"><i class="fa-solid fa-shield-halved"></i><span>Anti-akali penuh perlu validasi backend: RLS, Edge Function, dan audit device/IP.</span></div>
-          </div>
-          <div class="location-actions">
-            <button class="btn-location" id="checkLocationBtn" onclick="checkAttendanceLocation(true)"><i class="fa-solid fa-location-crosshairs"></i> Get Location</button>
+            <div class="location-fact"><i class="fa-solid fa-qrcode"></i><span>Scan QR harian yang ditampilkan admin di sekolah.</span></div>
+            <div class="location-fact"><i class="fa-solid fa-keyboard"></i><span>Jika scanner tidak terbuka, ketik kode QR pada kolom yang tersedia.</span></div>
+            <div class="location-fact"><i class="fa-solid fa-table"></i><span>Data absen dikirim ke Supabase dan dapat disalin otomatis ke Spreadsheet jika webhook aktif.</span></div>
           </div>
           <div class="location-result" id="locationResult"></div>
         </div>
@@ -4194,7 +4274,7 @@ async function renderAbsensi(){
           <ul>
             <li><i class="fa-solid fa-circle-check"></i><span>Android memakai satu layar vertikal agar tombol mudah dijangkau.</span></li>
             <li><i class="fa-solid fa-desktop"></i><span>Desktop memakai dua area: panel absen dan riwayat/aturan lokasi.</span></li>
-            <li><i class="fa-solid fa-shield-halved"></i><span>Status Hadir mengecek GPS baru; Sakit/Izin wajib catatan untuk validasi admin.</span></li>
+            <li><i class="fa-solid fa-shield-halved"></i><span>Status Hadir memakai QR/code harian; Sakit/Izin wajib catatan untuk validasi admin.</span></li>
           </ul>
         </div>
         <div class="history-card">
@@ -4225,9 +4305,12 @@ async function doAbsen(status){
     const qrCode=(document.getElementById('attendanceQrCode')?.value||'').trim();
     let loc=null;
     if(status==='hadir'){
-      toast('Mengecek lokasi perangkat...','info');
-      loc=await checkAttendanceLocation(false);
-      if(!loc)return;
+      const dailyQr=await getDailyQr();
+      if(dailyQr?.code&&!qrCode){
+        toast('Scan QR atau masukkan kode harian untuk Hadir.','error');
+        document.getElementById('attendanceQrCode')?.focus();
+        return;
+      }
     }else if(note.length<8){
       toast('Catatan wajib diisi minimal 8 karakter untuk Sakit/Izin.','error');
       document.getElementById('attendanceNote')?.focus();
@@ -4243,6 +4326,8 @@ async function doAbsen(status){
     };
     const error=await addAbsensi(rec);
     if(error){toast('Gagal mencatat absensi: '+(error.message||'Error'),'error');return;}
+    const sheetSync=await syncAttendanceToSpreadsheet(rec);
+    if(sheetSync.ok)toast('Absensi juga dikirim ke Spreadsheet.','success');
     toast('Kehadiran '+STATUS_LABELS[status]+' berhasil dicatat!','success');
     renderAbsensi();
   }catch(e){toast('Gagal terhubung ke database!','error');}
@@ -5041,6 +5126,7 @@ async function addAlfaByAdmin(){
     };
     const error=await addAbsensi(rec);
     if(error){toast('Gagal menyimpan: '+(error.message||'Error'),'error');return;}
+    await syncAttendanceToSpreadsheet(rec);
     toast(`Status ${STATUS_LABELS[status]} ditambahkan untuk ${user.name}`,'success');
     renderAdmin();
   }catch(e){toast('Gagal menghubungkan ke backend!','error');}
