@@ -157,6 +157,7 @@ img {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .desktop-nav {
@@ -165,9 +166,9 @@ img {
   justify-content: flex-start;
   gap: 4px;
   flex: 1;
-  margin: 0 18px;
+  margin: 0 12px;
   min-width: 0;
-  max-width: 660px;
+  max-width: none;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -178,7 +179,7 @@ img {
 
 .desktop-nav-item {
   min-height: 38px;
-  padding: 0 10px;
+  padding: 0 9px;
   border-radius: 12px;
   color: var(--text-muted);
   font-size: 0.74rem;
@@ -189,6 +190,10 @@ img {
   gap: 7px;
   transition: var(--transition);
   white-space: nowrap;
+}
+
+.admin-shortcut {
+  display: inline-flex;
 }
 
 .desktop-nav-item:hover,
@@ -209,6 +214,11 @@ img {
 
 .btn-ghost:hover {
   background: rgba(8, 101, 228, 0.12);
+}
+
+.btn-ghost.active {
+  background: rgba(8, 101, 228, 0.12);
+  color: var(--primary);
 }
 
 .btn-primary {
@@ -2607,6 +2617,9 @@ tr:last-child td {
   .desktop-nav {
     display: none;
   }
+  .admin-shortcut {
+    display: none;
+  }
   .user-chip-info {
     display: none;
   }
@@ -3580,6 +3593,11 @@ async function setDailyQr(code=''){
   return await callRpc('mm_admin_set_daily_qr',{p_token:sess?.token||'',p_code:code});
 }
 
+async function deleteDailyQr(){
+  const sess=getSession();
+  return await callRpc('mm_admin_delete_daily_qr',{p_token:sess?.token||''});
+}
+
 async function getDailyQr(){
   const sess=getSession();
   const {data,error}=await callRpc('mm_get_daily_qr',{p_token:sess?.token||''});
@@ -3686,13 +3704,13 @@ function isDesktopView(){
 
 function getVisiblePages(){
   const pages=[...PAGES];
+  if(currentUser&&currentUser.role==='admin')
+    pages.push({id:'admin',label:'Admin',icon:'fa-toolbox'});
   if(currentUser&&(currentUser.role==='anggota'||currentUser.role==='admin')){
     pages.push({id:'absensi',label:'Absensi',icon:'fa-calendar-days'});
     pages.push({id:'profile',label:'Profile',icon:'fa-user'});
     if(isDesktopView())pages.push({id:'typing',label:'10FastFinger',icon:'fa-keyboard'});
   }
-  if(currentUser&&currentUser.role==='admin')
-    pages.push({id:'admin',label:'Admin',icon:'fa-toolbox'});
   return pages;
 }
 
@@ -3727,6 +3745,7 @@ function buildActions(){
   const colors={admin:'#8b5cf6',anggota:'#10b981',pengunjung:'#0865E4'};
   const roles={admin:'Admin',anggota:'Anggota',pengunjung:'Pengunjung'};
   el.innerHTML=`
+    ${currentUser.role==='admin'?`<button class="btn-ghost admin-shortcut ${currentPage==='admin'?'active':''}" onclick="navigate('admin')"><i class="fa-solid fa-toolbox"></i> Admin</button>`:''}
     <div class="user-chip">
       <div class="ava" style="background:${colors[currentUser.role]}">${initials}</div>
       <div class="user-chip-info">
@@ -3745,6 +3764,7 @@ function navigate(page){
   el.classList.add('active');
   currentPage=page;
   buildNav();
+  buildActions();
   window.scrollTo({top:0,behavior:'smooth'});
   if(page==='absensi')renderAbsensi();
   if(page==='profile')renderProfile();
@@ -4305,12 +4325,7 @@ async function doAbsen(status){
     const qrCode=(document.getElementById('attendanceQrCode')?.value||'').trim();
     let loc=null;
     if(status==='hadir'){
-      const dailyQr=await getDailyQr();
-      if(dailyQr?.code&&!qrCode){
-        toast('Scan QR atau masukkan kode harian untuk Hadir.','error');
-        document.getElementById('attendanceQrCode')?.focus();
-        return;
-      }
+      if(qrCode)toast('Memvalidasi kode QR harian...','info');
     }else if(note.length<8){
       toast('Catatan wajib diisi minimal 8 karakter untuk Sakit/Izin.','error');
       document.getElementById('attendanceNote')?.focus();
@@ -4725,6 +4740,7 @@ async function renderAdmin(){
       <div class="tab-panel ${adminTab==='rekap'?'active':''}" id="tp-rekap">${renderAdminRecap(users,absensi)}</div>
       <div class="tab-panel ${adminTab==='team'?'active':''}" id="tp-team">${renderTeamTable()}</div>
     </div>`;
+    if(adminTab==='absen')setTimeout(()=>showDailyQr(false),0);
   }catch(e){
     el.innerHTML=`
       <div class="locked">
@@ -4818,8 +4834,9 @@ function renderAbsenTable(absensi,users){
       </div>
       <button class="btn-primary" style="height:42px; border-radius: 12px; font-weight:700;" onclick="generateDailyQr()"><i class="fa-solid fa-qrcode"></i> Buat QR</button>
       <button class="btn-ghost" style="height:42px; border-radius: 12px; font-weight:700;" onclick="showDailyQr()"><i class="fa-solid fa-eye"></i> Lihat</button>
+      <button class="btn-ghost" style="height:42px; border-radius: 12px; font-weight:700;color:var(--red);background:var(--red-light)" onclick="removeDailyQr()"><i class="fa-solid fa-trash"></i> Hapus QR</button>
     </div>
-    <p style="color:var(--text-muted);font-size:0.76rem;font-weight:700;margin-top:10px">Jika kode hari ini aktif, siswa harus memasukkan kode hasil scan QR selain lolos GPS.</p>
+    <p style="color:var(--text-muted);font-size:0.76rem;font-weight:700;margin-top:10px">QR aktif selama 24 jam sejak dibuat. Jika QR dihapus atau kadaluarsa, Hadir tetap bisa masuk tanpa kode; kode lama tidak akan berlaku.</p>
     <div id="dailyQrResult" class="location-result"></div>
   </div>
 
@@ -5163,28 +5180,44 @@ async function generateDailyQr(){
   toast('Kode QR harian aktif.','success');
 }
 
-async function showDailyQr(){
+async function showDailyQr(showEmptyToast=true){
   const data=await getDailyQr();
   const box=document.getElementById('dailyQrResult');
   if(!box)return;
   if(!data||!data.code){
     box.className='location-result show warn';
-    box.innerHTML='Belum ada kode QR aktif hari ini.';
+    box.innerHTML='<i class="fa-solid fa-circle-info"></i> Belum ada QR aktif hari ini. Absen Hadir tetap bisa masuk tanpa kode.';
+    if(showEmptyToast)toast('Belum ada QR aktif hari ini.','info');
     return;
   }
-  box.className='location-result show ok';
+  box.className=`location-result show ${data.active?'ok':'warn'}`;
   box.innerHTML=renderDailyQrResult(data);
 }
 
 function renderDailyQrResult(data){
   const code=String(data?.code||'');
   const qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(code);
-  return `
-    <div><i class="fa-solid fa-qrcode"></i> Kode aktif ${esc(data?.date||todayStr())}: <strong>${esc(code)}</strong></div>
+  const expiresAt=data?.expiresAt?new Date(data.expiresAt):null;
+  const expiresText=expiresAt?expiresAt.toLocaleString('id-ID'):'24 jam setelah dibuat';
+  const statusText=data?.active?'Aktif':'Tidak aktif / kadaluarsa';
+  const qrImage=data?.active?`
     <div class="qr-image-wrap">
       <img src="${qrUrl}" alt="QR Harian MM">
       <small>QR ini otomatis dari kode harian. Tampilkan di kelas/sekolah untuk discan siswa.</small>
-    </div>`;
+    </div>`:`<div style="margin-top:8px;font-size:0.78rem;font-weight:800;color:var(--text-muted)">Kode lama tidak berlaku. Buat QR baru jika ingin mewajibkan scan lagi.</div>`;
+  return `
+    <div><i class="fa-solid fa-qrcode"></i> Kode ${esc(data?.date||todayStr())}: <strong>${esc(code)}</strong></div>
+    <div style="margin-top:6px;font-size:0.78rem;font-weight:800">Status: ${esc(statusText)} - Kadaluarsa: ${esc(expiresText)}</div>
+    ${qrImage}`;
+}
+
+function removeDailyQr(){
+  confirm2('Hapus QR Harian','QR hari ini akan dinonaktifkan. Setelah dihapus, kode lama tidak berlaku dan Hadir dapat masuk tanpa kode sampai admin membuat QR baru.',async()=>{
+    const {error}=await deleteDailyQr();
+    if(error){toast(error.message||'Gagal menghapus QR.','error');return;}
+    toast('QR harian dinonaktifkan.','success');
+    showDailyQr(false);
+  });
 }
 
 function filterTbl(tableId,q){

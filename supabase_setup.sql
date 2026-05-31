@@ -91,8 +91,11 @@ CREATE TABLE IF NOT EXISTS mm_daily_qr (
   code        TEXT NOT NULL,
   active      BOOLEAN NOT NULL DEFAULT TRUE,
   created_by  TEXT REFERENCES users(id) ON DELETE SET NULL,
-  created_at  TIMESTAMPTZ DEFAULT NOW()
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  expires_at  TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '24 hours')
 );
+
+ALTER TABLE mm_daily_qr ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '24 hours');
 
 DELETE FROM absensi a
 USING absensi b
@@ -365,11 +368,15 @@ BEGIN
   IF p_status = 'hadir' THEN
     SELECT code INTO v_qr_code
     FROM mm_daily_qr
-    WHERE date = v_today AND active = TRUE
+    WHERE date = v_today AND active = TRUE AND COALESCE(expires_at, created_at + INTERVAL '24 hours') > NOW()
     LIMIT 1;
 
     IF v_qr_code IS NOT NULL AND TRIM(COALESCE(p_qr_code, '')) <> v_qr_code THEN
       RAISE EXCEPTION 'Kode QR harian tidak valid';
+    END IF;
+
+    IF v_qr_code IS NULL AND TRIM(COALESCE(p_qr_code, '')) <> '' THEN
+      RAISE EXCEPTION 'Kode QR sudah tidak aktif atau kadaluarsa';
     END IF;
 
     v_added_by := 'self' ||
@@ -821,12 +828,32 @@ BEGIN
     RAISE EXCEPTION 'Hanya admin yang dapat membuat kode QR harian';
   END IF;
 
-  INSERT INTO mm_daily_qr (date, code, active, created_by, created_at)
-  VALUES (v_today, v_code, TRUE, v_admin.id, NOW())
+  INSERT INTO mm_daily_qr (date, code, active, created_by, created_at, expires_at)
+  VALUES (v_today, v_code, TRUE, v_admin.id, NOW(), NOW() + INTERVAL '24 hours')
   ON CONFLICT (date) DO UPDATE
-  SET code = EXCLUDED.code, active = TRUE, created_by = EXCLUDED.created_by, created_at = NOW();
+  SET code = EXCLUDED.code, active = TRUE, created_by = EXCLUDED.created_by, created_at = NOW(), expires_at = NOW() + INTERVAL '24 hours';
 
-  RETURN jsonb_build_object('date', v_today, 'code', v_code);
+  RETURN jsonb_build_object('date', v_today, 'code', v_code, 'active', TRUE, 'expiresAt', NOW() + INTERVAL '24 hours');
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_admin_delete_daily_qr(p_token TEXT)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_admin users;
+  v_today TEXT := to_char(NOW() AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD');
+BEGIN
+  v_admin := mm_current_user(p_token);
+  IF v_admin.role <> 'admin' THEN
+    RAISE EXCEPTION 'Hanya admin yang dapat menghapus kode QR harian';
+  END IF;
+
+  UPDATE mm_daily_qr SET active = FALSE, expires_at = NOW() WHERE date = v_today;
+  RETURN jsonb_build_object('ok', TRUE, 'date', v_today);
 END;
 $$;
 
@@ -847,7 +874,13 @@ BEGIN
   END IF;
 
   SELECT * INTO v_row FROM mm_daily_qr WHERE date = v_today LIMIT 1;
-  RETURN jsonb_build_object('date', v_today, 'code', v_row.code, 'active', COALESCE(v_row.active, FALSE));
+  RETURN jsonb_build_object(
+    'date', v_today,
+    'code', v_row.code,
+    'active', COALESCE(v_row.active, FALSE) AND COALESCE(v_row.expires_at, v_row.created_at + INTERVAL '24 hours') > NOW(),
+    'expiresAt', COALESCE(v_row.expires_at, v_row.created_at + INTERVAL '24 hours'),
+    'expired', COALESCE(v_row.expires_at, v_row.created_at + INTERVAL '24 hours') <= NOW()
+  );
 END;
 $$;
 
@@ -920,4 +953,5 @@ GRANT EXECUTE ON FUNCTION mm_toggle_social_like(TEXT, UUID) TO anon, authenticat
 GRANT EXECUTE ON FUNCTION mm_add_social_comment(TEXT, UUID, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_add_social_share(TEXT, UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_admin_set_daily_qr(TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_admin_delete_daily_qr(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_daily_qr(TEXT) TO anon, authenticated;
