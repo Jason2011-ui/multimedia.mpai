@@ -742,6 +742,25 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION mm_delete_social_post(p_token TEXT, p_post_id UUID)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_admin users;
+BEGIN
+  v_admin := mm_current_user(p_token);
+  IF v_admin.role <> 'admin' THEN
+    RAISE EXCEPTION 'Hanya admin yang dapat menghapus posting sosial';
+  END IF;
+
+  DELETE FROM mm_social_posts WHERE id = p_post_id;
+  RETURN jsonb_build_object('ok', TRUE);
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION mm_toggle_social_like(p_token TEXT, p_post_id UUID)
 RETURNS JSONB
 LANGUAGE PLPGSQL
@@ -912,6 +931,7 @@ GRANT EXECUTE ON FUNCTION mm_submit_typing_score(TEXT, INTEGER, INTEGER, INTEGER
 GRANT EXECUTE ON FUNCTION mm_get_typing_leaderboard() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_social_feed(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_create_social_post(TEXT, TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_delete_social_post(TEXT, UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_toggle_social_like(TEXT, UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_add_social_comment(TEXT, UUID, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_add_social_share(TEXT, UUID) TO anon, authenticated;

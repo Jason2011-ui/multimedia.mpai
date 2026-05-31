@@ -162,18 +162,26 @@ img {
 .desktop-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4px;
   flex: 1;
   margin: 0 18px;
+  min-width: 0;
+  max-width: 660px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.desktop-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .desktop-nav-item {
   min-height: 38px;
-  padding: 0 12px;
+  padding: 0 10px;
   border-radius: 12px;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 800;
   display: inline-flex;
   align-items: center;
@@ -298,8 +306,15 @@ img {
   border: 1px solid rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: flex-start;
+  gap: 4px;
   padding: 0 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+#bottom-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
@@ -307,7 +322,7 @@ img {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  flex: 0 0 64px;
   height: 100%;
   color: var(--text-muted);
   transition: var(--transition);
@@ -813,9 +828,14 @@ img {
 .social-post {
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 18px;
   padding: 18px;
   box-shadow: var(--shadow-sm);
+}
+
+.social-compose {
+  border-color: rgba(8,101,228,0.16);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
 }
 
 .social-compose textarea,
@@ -833,6 +853,32 @@ img {
   margin-bottom: 10px;
 }
 
+.file-pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px dashed rgba(8,101,228,0.28);
+  background: rgba(8,101,228,0.05);
+  color: var(--text-muted);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.file-pick input {
+  display: none;
+}
+
+.file-pick span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .social-compose textarea {
   min-height: 86px;
   resize: vertical;
@@ -843,6 +889,17 @@ img {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.social-post-head-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.social-admin-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .social-post-avatar {
@@ -887,6 +944,21 @@ img {
   border: 1px solid var(--border);
   margin-bottom: 12px;
   background: #f8fafc;
+}
+
+.social-attachment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  color: var(--primary);
+  background: rgba(8,101,228,0.05);
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  word-break: break-all;
 }
 
 .social-actions {
@@ -943,6 +1015,58 @@ img {
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
+}
+
+.share-modal-actions,
+.qr-scan-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.share-option {
+  min-height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 800;
+  color: var(--text-main);
+  background: #f8fafc;
+  border: 1px solid var(--border);
+}
+
+.share-option.whatsapp {
+  background: rgba(37,211,102,0.12);
+  color: #128c4a;
+  border-color: rgba(37,211,102,0.24);
+}
+
+.qr-image-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: #fff;
+  margin-top: 10px;
+}
+
+.qr-image-wrap img {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+}
+
+.qr-video {
+  width: 100%;
+  border-radius: 18px;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  margin-top: 10px;
 }
 
 /* ── ABSENSI SCREEN ── */
@@ -2988,13 +3112,11 @@ footer p {
     <section class="section">
       <div class="section-header">
         <div class="section-tag">Ikuti Kami</div>
-        <h2 class="section-title">MM Social</h2>
-        <p class="section-desc">Feed internal Multimedia: posting, komentar, like, dan share.</p>
+        <h2 class="section-title">Sosmed Resmi MM</h2>
+        <p class="section-desc">Tab ini khusus untuk promosi kanal resmi Multimedia agar mudah ditemukan dan dibagikan.</p>
       </div>
 
-      <div id="socialContent"></div>
-
-      <div class="external-socials" style="margin-top:18px">
+      <div class="external-socials">
         <a href="https://instagram.com/mpai.multigen" target="_blank" class="sosmed-card">
           <div class="sosmed-icon" style="background: linear-gradient(135deg, #f09433, #dc2743, #bc1888);"><i class="fab fa-instagram"></i></div>
           <div class="sosmed-info">
@@ -3024,6 +3146,18 @@ footer p {
           </div>
         </a>
       </div>
+    </section>
+  </div>
+
+  <!-- PAGE: GALERY MM -->
+  <div class="page-section" id="page-gallery">
+    <section class="section">
+      <div class="section-header">
+        <div class="section-tag">Karya & Kegiatan</div>
+        <h2 class="section-title">Galery MM</h2>
+        <p class="section-desc">Feed internal untuk dokumentasi Multimedia: upload file, like, komentar, dan share terarah.</p>
+      </div>
+      <div id="galleryContent"></div>
     </section>
   </div>
 
@@ -3350,6 +3484,11 @@ async function createSocialPost(caption,mediaUrl){
   return await callRpc('mm_create_social_post',{p_token:sess?.token||'',p_caption:caption,p_media_url:mediaUrl||''});
 }
 
+async function deleteSocialPost(postId){
+  const sess=getSession();
+  return await callRpc('mm_delete_social_post',{p_token:sess?.token||'',p_post_id:postId});
+}
+
 async function toggleSocialLike(postId){
   const sess=getSession();
   return await callRpc('mm_toggle_social_like',{p_token:sess?.token||'',p_post_id:postId});
@@ -3455,6 +3594,7 @@ const PAGES=[
   {id:'class',label:'Kelas',icon:'fa-graduation-cap'},
   {id:'tim',label:'Tim',icon:'fa-users'},
   {id:'sosmed',label:'Sosmed',icon:'fa-share-nodes'},
+  {id:'gallery',label:'Galery',icon:'fa-images'},
 ];
 
 function isDesktopView(){
@@ -3526,7 +3666,7 @@ function navigate(page){
   if(page==='absensi')renderAbsensi();
   if(page==='profile')renderProfile();
   if(page==='typing')renderTyping();
-  if(page==='sosmed')renderSocialFeed();
+  if(page==='gallery')renderGalleryFeed();
   if(page==='admin')renderAdmin();
   if(page==='beranda')updateHeroStats();
 }
@@ -3556,23 +3696,28 @@ function animNum(id,target){
 }
 
 /* ── ABSENSI SCREEN ── */
-/* MM SOCIAL FEED */
-async function renderSocialFeed(){
-  const el=document.getElementById('socialContent');
+/* MM GALLERY FEED */
+async function renderGalleryFeed(){
+  const el=document.getElementById('galleryContent');
   if(!el)return;
-  el.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-light)"><i class="fas fa-spinner fa-spin"></i><p style="margin-top:10px;font-size:0.8rem">Memuat MM Social...</p></div>`;
+  el.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-light)"><i class="fas fa-spinner fa-spin"></i><p style="margin-top:10px;font-size:0.8rem">Memuat Galery MM...</p></div>`;
   try{
     const posts=await getSocialFeed();
     const compose=currentUser?.role==='admin'?`
       <div class="social-compose">
-        <textarea id="socialCaption" placeholder="Bagikan update kegiatan Multimedia..."></textarea>
-        <input id="socialMediaUrl" placeholder="URL gambar/video opsional">
-        <button class="btn-primary" onclick="submitSocialPost()"><i class="fa-solid fa-paper-plane"></i> Posting</button>
+        <textarea id="socialCaption" placeholder="Bagikan dokumentasi, karya, atau update kegiatan Multimedia..."></textarea>
+        <label class="file-pick" for="socialMediaFile">
+          <span><i class="fa-solid fa-cloud-arrow-up"></i> Upload file foto/video</span>
+          <small id="socialFileName">Tanpa batas MB di sisi form</small>
+          <input id="socialMediaFile" type="file" accept="image/*,video/*" onchange="updateSocialFileName()">
+        </label>
+        <input id="socialMediaUrl" placeholder="Atau tempel URL gambar/video opsional">
+        <button class="btn-primary" onclick="submitSocialPost()"><i class="fa-solid fa-paper-plane"></i> Posting ke Galery</button>
       </div>`:'';
-    const feed=posts.length?posts.map(renderSocialPost).join(''):`<div class="social-post" style="text-align:center;color:var(--text-light);font-size:0.85rem">Belum ada posting MM Social.</div>`;
+    const feed=posts.length?posts.map(renderSocialPost).join(''):`<div class="social-post" style="text-align:center;color:var(--text-light);font-size:0.85rem">Belum ada posting Galery MM.</div>`;
     el.innerHTML=`<div class="social-layout">${compose}${feed}</div>`;
   }catch(e){
-    el.innerHTML=`<div class="locked"><div class="locked-icon" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i></div><h3>Gagal Memuat Social</h3><p>Coba reload halaman.</p></div>`;
+    el.innerHTML=`<div class="locked"><div class="locked-icon" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i></div><h3>Gagal Memuat Galery</h3><p>Coba reload halaman.</p></div>`;
   }
 }
 
@@ -3582,23 +3727,27 @@ function renderSocialPost(p){
       <strong>${esc(c.name)} <span style="color:var(--text-light);font-weight:700">@${esc(c.username)}</span></strong>
       <p>${esc(c.body)}</p>
     </div>`).join('');
-  const media=p.mediaUrl?`<img class="social-media" src="${esc(p.mediaUrl)}" alt="Posting MM" onerror="this.style.display='none'">`:'';
+  const media=renderSocialMedia(p.mediaUrl);
   const logged=!!currentUser;
+  const adminTools=currentUser?.role==='admin'?`<div class="social-admin-actions">
+    <button class="action-btn danger" title="Hapus postingan" onclick="removeSocialPost('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+  </div>`:'';
   return `
     <article class="social-post" id="post-${p.id}">
       <div class="social-post-head">
         <div class="social-post-avatar">${initialsOf(p.name)}</div>
-        <div>
+        <div class="social-post-head-main">
           <div class="social-post-name">${esc(p.name)}</div>
           <div class="social-post-meta">@${esc(p.username)} - ${new Date(p.createdAt).toLocaleString('id-ID')}</div>
         </div>
+        ${adminTools}
       </div>
       <div class="social-caption">${esc(p.caption)}</div>
       ${media}
       <div class="social-actions">
         <button class="social-action ${p.liked?'active':''}" ${logged?'':'disabled'} onclick="likeSocialPost('${p.id}')"><i class="fa-solid fa-heart"></i> ${p.likes||0}</button>
         <button class="social-action" ${logged?'':'disabled'} onclick="focusSocialComment('${p.id}')"><i class="fa-solid fa-comment"></i> ${(p.comments||[]).length}</button>
-        <button class="social-action" ${logged?'':'disabled'} onclick="shareSocialPost('${p.id}')"><i class="fa-solid fa-share"></i> ${p.shares||0}</button>
+        <button class="social-action" ${logged?'':'disabled'} onclick="openShareOptions('${p.id}')"><i class="fa-solid fa-share"></i> ${p.shares||0}</button>
       </div>
       <div class="social-comments">${comments}</div>
       ${logged?`<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px">
@@ -3608,20 +3757,56 @@ function renderSocialPost(p){
     </article>`;
 }
 
+function renderSocialMedia(url){
+  if(!url)return'';
+  const clean=String(url);
+  const safe=esc(clean);
+  const isVideo=/^data:video\//i.test(clean)||/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(clean);
+  const isImage=/^data:image\//i.test(clean)||/\.(png|jpe?g|gif|webp|avif|svg)(\?|#|$)/i.test(clean);
+  if(isVideo)return`<video class="social-media" src="${safe}" controls playsinline preload="metadata"></video>`;
+  if(isImage||/^data:/i.test(clean))return`<img class="social-media" src="${safe}" alt="Posting MM" onerror="this.style.display='none'">`;
+  return`<a class="social-attachment" href="${safe}" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i><span>${safe}</span></a>`;
+}
+
+function updateSocialFileName(){
+  const file=document.getElementById('socialMediaFile')?.files?.[0];
+  const label=document.getElementById('socialFileName');
+  if(label)label.textContent=file?file.name:'Tanpa batas MB di sisi form';
+}
+
+function readSocialFileAsDataUrl(){
+  const file=document.getElementById('socialMediaFile')?.files?.[0];
+  if(!file)return Promise.resolve('');
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||''));
+    reader.onerror=()=>reject(reader.error||new Error('Gagal membaca file'));
+    reader.readAsDataURL(file);
+  });
+}
+
 async function submitSocialPost(){
   const caption=document.getElementById('socialCaption')?.value.trim();
-  const mediaUrl=document.getElementById('socialMediaUrl')?.value.trim();
+  const url=document.getElementById('socialMediaUrl')?.value.trim();
   if(!caption||caption.length<3){toast('Caption minimal 3 karakter.','error');return;}
+  let mediaUrl=url;
+  try{
+    const fileData=await readSocialFileAsDataUrl();
+    if(fileData)mediaUrl=fileData;
+  }catch(e){
+    toast('File gagal dibaca. Coba pilih ulang file.','error');
+    return;
+  }
   const {error}=await createSocialPost(caption,mediaUrl);
   if(error){toast(error.message||'Gagal posting.','error');return;}
-  toast('Posting MM Social terkirim.','success');
-  renderSocialFeed();
+  toast('Posting Galery MM terkirim.','success');
+  renderGalleryFeed();
 }
 
 async function likeSocialPost(id){
   const {error}=await toggleSocialLike(id);
   if(error){toast(error.message||'Gagal like.','error');return;}
-  renderSocialFeed();
+  renderGalleryFeed();
 }
 
 function focusSocialComment(id){
@@ -3634,15 +3819,54 @@ async function submitSocialComment(id){
   if(!body||body.length<2){toast('Komentar terlalu pendek.','error');return;}
   const {error}=await addSocialComment(id,body);
   if(error){toast(error.message||'Gagal komentar.','error');return;}
-  renderSocialFeed();
+  renderGalleryFeed();
 }
 
-async function shareSocialPost(id){
+function openShareOptions(id){
+  const url=location.origin+location.pathname+'#post-'+id;
+  const text='Lihat posting Galery MM ini: '+url;
+  const overlay=document.createElement('div');
+  overlay.className='overlay show';
+  overlay.innerHTML=`
+    <div class="modal">
+      <button class="modal-close" onclick="this.closest('.overlay').remove()"><i class="fas fa-times"></i></button>
+      <h2>Bagikan Postingan</h2>
+      <p class="modal-sub">Pilih tujuan share. Aksi ini tidak reload feed, jadi tidak akan looping.</p>
+      <div class="share-modal-actions">
+        <button class="share-option whatsapp" onclick="shareSocialPost('${id}','whatsapp')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+        <button class="share-option" onclick="shareSocialPost('${id}','copy')"><i class="fa-solid fa-link"></i> Salin Link</button>
+        <button class="share-option" onclick="shareSocialPost('${id}','native')"><i class="fa-solid fa-share-nodes"></i> Share Perangkat</button>
+      </div>
+      <p class="modal-footer-note" style="margin-top:14px">${esc(url)}</p>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function shareSocialPost(id,mode){
+  const url=location.origin+location.pathname+'#post-'+id;
+  const text='Lihat posting Galery MM ini: '+url;
   const {error}=await addSocialShare(id);
   if(error){toast(error.message||'Gagal share.','error');return;}
-  try{await navigator.clipboard.writeText(location.href.split('#')[0]+'#post-'+id)}catch(e){}
-  toast('Share dicatat. Link halaman disiapkan.','success');
-  renderSocialFeed();
+  if(mode==='whatsapp'){
+    window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
+  }else if(mode==='native'&&navigator.share){
+    try{await navigator.share({title:'Galery MM',text:'Lihat posting Galery MM ini',url});}catch(e){}
+  }else{
+    try{await navigator.clipboard.writeText(url);toast('Link postingan disalin.','success');}
+    catch(e){toast('Share dicatat. Jika salin gagal, copy link dari modal.','info');}
+  }
+  document.querySelectorAll('.overlay.show').forEach(o=>{
+    if(o.textContent.includes('Bagikan Postingan'))o.remove();
+  });
+}
+
+async function removeSocialPost(id){
+  confirm2('Hapus Postingan','Posting Galery MM ini akan dihapus beserta like, komentar, dan share.',async()=>{
+    const {error}=await deleteSocialPost(id);
+    if(error){toast(error.message||'Gagal menghapus postingan.','error');return;}
+    toast('Postingan Galery MM dihapus.','success');
+    renderGalleryFeed();
+  });
 }
 
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -3940,7 +4164,10 @@ async function renderAbsensi(){
           <label for="attendanceNote">Catatan absen</label>
           <textarea id="attendanceNote" placeholder="Wajib untuk Sakit/Izin. Untuk Hadir boleh dikosongkan, atau isi keterangan singkat bila perlu."></textarea>
           <label for="attendanceQrCode" style="margin-top:12px">Kode QR harian (jika admin mengaktifkan)</label>
-          <input id="attendanceQrCode" class="ipt" placeholder="Scan/ketik kode QR harian untuk Hadir" style="width:100%">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px">
+            <input id="attendanceQrCode" class="ipt" placeholder="Scan/ketik kode QR harian untuk Hadir" style="width:100%">
+            <button class="btn-ghost" style="height:42px;border-radius:12px;font-weight:800" onclick="openQrScanner()"><i class="fa-solid fa-camera"></i> Scan</button>
+          </div>
         </div>`:''}
         <div class="location-card">
           <div class="location-card-head">
@@ -4019,6 +4246,63 @@ async function doAbsen(status){
     toast('Kehadiran '+STATUS_LABELS[status]+' berhasil dicatat!','success');
     renderAbsensi();
   }catch(e){toast('Gagal terhubung ke database!','error');}
+}
+
+let qrScanStream=null;
+let qrScanTimer=null;
+
+function closeQrScanner(){
+  if(qrScanTimer){clearInterval(qrScanTimer);qrScanTimer=null;}
+  if(qrScanStream){
+    qrScanStream.getTracks().forEach(t=>t.stop());
+    qrScanStream=null;
+  }
+  document.getElementById('qrScannerOverlay')?.remove();
+}
+
+async function openQrScanner(){
+  const overlay=document.createElement('div');
+  overlay.className='overlay show';
+  overlay.id='qrScannerOverlay';
+  overlay.innerHTML=`
+    <div class="modal">
+      <button class="modal-close" onclick="closeQrScanner()"><i class="fas fa-times"></i></button>
+      <h2>Scan QR Harian</h2>
+      <p class="modal-sub">Arahkan kamera ke QR dari admin. Jika browser tidak mendukung scanner, ketik kode manual.</p>
+      <video id="qrScannerVideo" class="qr-video" autoplay muted playsinline></video>
+      <div id="qrScannerStatus" class="location-result" style="display:block;margin-top:10px">Menyiapkan kamera...</div>
+      <div class="qr-scan-actions">
+        <button class="btn-ghost" onclick="closeQrScanner()">Tutup Scanner</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const video=document.getElementById('qrScannerVideo');
+  const status=document.getElementById('qrScannerStatus');
+  try{
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error('Kamera tidak tersedia di browser ini.');
+    qrScanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    video.srcObject=qrScanStream;
+    await video.play();
+    if(!('BarcodeDetector' in window)){
+      status.textContent='Kamera aktif, tetapi browser ini belum mendukung deteksi QR otomatis. Ketik kode QR secara manual.';
+      return;
+    }
+    const detector=new BarcodeDetector({formats:['qr_code']});
+    status.textContent='Kamera aktif. Arahkan ke QR harian admin.';
+    qrScanTimer=setInterval(async()=>{
+      try{
+        const codes=await detector.detect(video);
+        if(codes.length){
+          const value=(codes[0].rawValue||'').trim();
+          document.getElementById('attendanceQrCode').value=value;
+          toast('Kode QR terbaca.','success');
+          closeQrScanner();
+        }
+      }catch(e){}
+    },650);
+  }catch(e){
+    status.textContent=e.message||'Kamera gagal dibuka. Pastikan izin kamera aktif.';
+  }
 }
 
 function startClock(){
@@ -4788,7 +5072,7 @@ async function generateDailyQr(){
   if(error){toast(error.message||'Gagal membuat QR.','error');return;}
   if(box){
     box.className='location-result show ok';
-    box.innerHTML=`<i class="fa-solid fa-qrcode"></i> Kode hari ini: <strong>${esc(data.code)}</strong>. Buat QR dari teks ini dan tempel di sekolah.`;
+    box.innerHTML=renderDailyQrResult(data);
   }
   toast('Kode QR harian aktif.','success');
 }
@@ -4803,7 +5087,18 @@ async function showDailyQr(){
     return;
   }
   box.className='location-result show ok';
-  box.innerHTML=`<i class="fa-solid fa-qrcode"></i> Kode aktif ${esc(data.date)}: <strong>${esc(data.code)}</strong>`;
+  box.innerHTML=renderDailyQrResult(data);
+}
+
+function renderDailyQrResult(data){
+  const code=String(data?.code||'');
+  const qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(code);
+  return `
+    <div><i class="fa-solid fa-qrcode"></i> Kode aktif ${esc(data?.date||todayStr())}: <strong>${esc(code)}</strong></div>
+    <div class="qr-image-wrap">
+      <img src="${qrUrl}" alt="QR Harian MM">
+      <small>QR ini otomatis dari kode harian. Tampilkan di kelas/sekolah untuk discan siswa.</small>
+    </div>`;
 }
 
 function filterTbl(tableId,q){
