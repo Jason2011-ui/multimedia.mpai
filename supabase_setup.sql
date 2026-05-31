@@ -59,7 +59,22 @@ CREATE TABLE IF NOT EXISTS mm_social_posts (
   name        TEXT NOT NULL,
   caption     TEXT NOT NULL,
   media_url   TEXT,
+  media_category TEXT NOT NULL DEFAULT 'dokumentasi',
   created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE mm_social_posts ADD COLUMN IF NOT EXISTS media_category TEXT NOT NULL DEFAULT 'dokumentasi';
+
+CREATE TABLE IF NOT EXISTS mm_admin_audit_logs (
+  id             UUID PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
+  admin_id       TEXT REFERENCES users(id) ON DELETE SET NULL,
+  admin_username TEXT NOT NULL,
+  admin_name     TEXT NOT NULL,
+  action         TEXT NOT NULL,
+  target_type    TEXT NOT NULL,
+  target_id      TEXT DEFAULT '',
+  detail         TEXT DEFAULT '',
+  created_at     TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS mm_social_likes (
@@ -463,6 +478,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_admin users;
+  v_old_role TEXT;
 BEGIN
   v_admin := mm_current_user(p_token);
   IF v_admin.role <> 'admin' THEN
@@ -482,6 +498,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_admin users;
+  v_post mm_social_posts;
 BEGIN
   v_admin := mm_current_user(p_token);
   IF v_admin.role <> 'admin' THEN
@@ -492,7 +509,10 @@ BEGIN
     RAISE EXCEPTION 'Role tidak valid';
   END IF;
 
+  SELECT role INTO v_old_role FROM users WHERE id = p_user_id;
   UPDATE users SET role = p_role WHERE id = p_user_id;
+  INSERT INTO mm_admin_audit_logs (admin_id, admin_username, admin_name, action, target_type, target_id, detail)
+  VALUES (v_admin.id, v_admin.username, v_admin.name, 'ubah_role', 'user', p_user_id, COALESCE(v_old_role, '-') || ' -> ' || p_role);
   RETURN jsonb_build_object('ok', TRUE);
 END;
 $$;
@@ -702,6 +722,7 @@ BEGIN
       'username', p.username,
       'caption', p.caption,
       'mediaUrl', p.media_url,
+      'category', p.media_category,
       'createdAt', p.created_at,
       'liked', CASE WHEN v_user_id IS NULL THEN FALSE ELSE EXISTS (SELECT 1 FROM mm_social_likes l WHERE l.post_id = p.id AND l.user_id = v_user_id) END,
       'likes', (SELECT COUNT(*) FROM mm_social_likes l WHERE l.post_id = p.id),
@@ -713,7 +734,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION mm_create_social_post(p_token TEXT, p_caption TEXT, p_media_url TEXT DEFAULT '')
+CREATE OR REPLACE FUNCTION mm_create_social_post(p_token TEXT, p_caption TEXT, p_media_url TEXT DEFAULT '', p_category TEXT DEFAULT 'dokumentasi')
 RETURNS JSONB
 LANGUAGE PLPGSQL
 SECURITY DEFINER
@@ -732,8 +753,15 @@ BEGIN
     RAISE EXCEPTION 'Caption minimal 3 karakter';
   END IF;
 
-  INSERT INTO mm_social_posts (user_id, username, name, caption, media_url)
-  VALUES (v_user.id, v_user.username, v_user.name, left(TRIM(p_caption), 700), NULLIF(TRIM(p_media_url), ''))
+  INSERT INTO mm_social_posts (user_id, username, name, caption, media_url, media_category)
+  VALUES (
+    v_user.id,
+    v_user.username,
+    v_user.name,
+    left(TRIM(p_caption), 700),
+    NULLIF(TRIM(p_media_url), ''),
+    CASE WHEN p_category IN ('dokumentasi','foto','video','desain') THEN p_category ELSE 'dokumentasi' END
+  )
   RETURNING id INTO v_id;
 
   RETURN jsonb_build_object('id', v_id);
@@ -754,7 +782,10 @@ BEGIN
     RAISE EXCEPTION 'Hanya admin yang dapat menghapus posting sosial';
   END IF;
 
+  SELECT * INTO v_post FROM mm_social_posts WHERE id = p_post_id;
   DELETE FROM mm_social_posts WHERE id = p_post_id;
+  INSERT INTO mm_admin_audit_logs (admin_id, admin_username, admin_name, action, target_type, target_id, detail)
+  VALUES (v_admin.id, v_admin.username, v_admin.name, 'hapus_postingan', 'gallery_post', p_post_id::TEXT, COALESCE(v_post.caption, 'Postingan tidak ditemukan'));
   RETURN jsonb_build_object('ok', TRUE);
 END;
 $$;
@@ -860,6 +891,8 @@ BEGIN
   END IF;
 
   UPDATE mm_daily_qr SET active = FALSE, expires_at = NOW() WHERE date = v_today;
+  INSERT INTO mm_admin_audit_logs (admin_id, admin_username, admin_name, action, target_type, target_id, detail)
+  VALUES (v_admin.id, v_admin.username, v_admin.name, 'hapus_qr', 'daily_qr', v_today, 'QR harian dinonaktifkan');
   RETURN jsonb_build_object('ok', TRUE, 'date', v_today);
 END;
 $$;
@@ -931,6 +964,36 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION mm_get_admin_audit_logs(p_token TEXT)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_admin users;
+BEGIN
+  v_admin := mm_current_user(p_token);
+  IF v_admin.role <> 'admin' THEN
+    RAISE EXCEPTION 'Hanya admin yang dapat melihat audit log';
+  END IF;
+
+  RETURN (
+    SELECT COALESCE(jsonb_agg(jsonb_build_object(
+      'id', l.id,
+      'adminName', l.admin_name,
+      'adminUsername', l.admin_username,
+      'action', l.action,
+      'targetType', l.target_type,
+      'targetId', l.target_id,
+      'detail', l.detail,
+      'createdAt', l.created_at
+    ) ORDER BY l.created_at DESC), '[]'::jsonb)
+    FROM (SELECT * FROM mm_admin_audit_logs ORDER BY created_at DESC LIMIT 150) l
+  );
+END;
+$$;
+
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE absensi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_sessions ENABLE ROW LEVEL SECURITY;
@@ -942,6 +1005,7 @@ ALTER TABLE mm_social_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_social_shares ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_daily_qr ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_app_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mm_admin_audit_logs ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "allow_all_users" ON users;
 DROP POLICY IF EXISTS "allow_all_absensi" ON absensi;
@@ -956,6 +1020,7 @@ DROP POLICY IF EXISTS "deny_direct_social_comments" ON mm_social_comments;
 DROP POLICY IF EXISTS "deny_direct_social_shares" ON mm_social_shares;
 DROP POLICY IF EXISTS "deny_direct_daily_qr" ON mm_daily_qr;
 DROP POLICY IF EXISTS "deny_direct_app_settings" ON mm_app_settings;
+DROP POLICY IF EXISTS "deny_direct_admin_audit_logs" ON mm_admin_audit_logs;
 
 CREATE POLICY "deny_direct_users" ON users FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_absensi" ON absensi FOR ALL USING (FALSE) WITH CHECK (FALSE);
@@ -968,6 +1033,7 @@ CREATE POLICY "deny_direct_social_comments" ON mm_social_comments FOR ALL USING 
 CREATE POLICY "deny_direct_social_shares" ON mm_social_shares FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_daily_qr" ON mm_daily_qr FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_app_settings" ON mm_app_settings FOR ALL USING (FALSE) WITH CHECK (FALSE);
+CREATE POLICY "deny_direct_admin_audit_logs" ON mm_admin_audit_logs FOR ALL USING (FALSE) WITH CHECK (FALSE);
 
 REVOKE ALL ON users FROM anon, authenticated;
 REVOKE ALL ON absensi FROM anon, authenticated;
@@ -980,6 +1046,7 @@ REVOKE ALL ON mm_social_comments FROM anon, authenticated;
 REVOKE ALL ON mm_social_shares FROM anon, authenticated;
 REVOKE ALL ON mm_daily_qr FROM anon, authenticated;
 REVOKE ALL ON mm_app_settings FROM anon, authenticated;
+REVOKE ALL ON mm_admin_audit_logs FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_login(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_register(TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_me(TEXT) TO anon, authenticated;
@@ -999,6 +1066,7 @@ GRANT EXECUTE ON FUNCTION mm_submit_typing_score(TEXT, INTEGER, INTEGER, INTEGER
 GRANT EXECUTE ON FUNCTION mm_get_typing_leaderboard() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_social_feed(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_create_social_post(TEXT, TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_create_social_post(TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_delete_social_post(TEXT, UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_toggle_social_like(TEXT, UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_add_social_comment(TEXT, UUID, TEXT) TO anon, authenticated;
@@ -1008,3 +1076,4 @@ GRANT EXECUTE ON FUNCTION mm_admin_delete_daily_qr(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_daily_qr(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_sheet_config() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_admin_set_sheet_config(TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_get_admin_audit_logs(TEXT) TO anon, authenticated;

@@ -834,6 +834,28 @@ img {
   margin: 0 auto;
 }
 
+.gallery-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.gallery-filter button {
+  min-height: 36px;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: rgba(8,101,228,0.06);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.gallery-filter button.active {
+  background: var(--primary);
+  color: #fff;
+}
+
 .social-compose,
 .social-post {
   background: var(--card-bg);
@@ -944,6 +966,53 @@ img {
   line-height: 1.55;
   margin-bottom: 12px;
   white-space: pre-wrap;
+}
+
+.social-post-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.social-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: rgba(8,101,228,0.07);
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.social-engagement {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.engagement-pill {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 8px;
+  background: #fbfbfb;
+  text-align: center;
+}
+
+.engagement-pill strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 0.88rem;
+}
+
+.engagement-pill span {
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  font-weight: 800;
 }
 
 .social-media {
@@ -1069,6 +1138,27 @@ img {
   width: 180px;
   height: 180px;
   object-fit: contain;
+}
+
+.qr-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.qr-status-badge.active {
+  background: var(--green-light);
+  color: var(--green);
+}
+
+.qr-status-badge.inactive {
+  background: var(--amber-light);
+  color: var(--amber);
 }
 
 .qr-video {
@@ -3283,6 +3373,7 @@ const GOOGLE_SHEET_WEBHOOK_URL = ''; // Isi dengan URL Apps Script Web App agar 
 /* ── INIT SUPABASE ── */
 const _isConfigured = !SUPABASE_URL.includes('MASUKKAN') && !SUPABASE_KEY.includes('MASUKKAN');
 const _sb = _isConfigured ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+let sheetWebhookWarned=false;
 
 async function callRpc(fn,args={}){
   if(!_sb)return {data:null,error:{message:'Supabase belum dikonfigurasi'}};
@@ -3580,9 +3671,9 @@ async function getSocialFeed(){
   return Array.isArray(data)?data:[];
 }
 
-async function createSocialPost(caption,mediaUrl){
+async function createSocialPost(caption,mediaUrl,category='dokumentasi'){
   const sess=getSession();
-  return await callRpc('mm_create_social_post',{p_token:sess?.token||'',p_caption:caption,p_media_url:mediaUrl||''});
+  return await callRpc('mm_create_social_post',{p_token:sess?.token||'',p_caption:caption,p_media_url:mediaUrl||'',p_category:category||'dokumentasi'});
 }
 
 async function deleteSocialPost(postId){
@@ -3620,6 +3711,13 @@ async function getDailyQr(){
   const {data,error}=await callRpc('mm_get_daily_qr',{p_token:sess?.token||''});
   if(error)return null;
   return data;
+}
+
+async function getAuditLogs(){
+  const sess=getSession();
+  const {data,error}=await callRpc('mm_get_admin_audit_logs',{p_token:sess?.token||''});
+  if(error)return[];
+  return Array.isArray(data)?data:[];
 }
 
 async function initDB(){
@@ -3818,6 +3916,8 @@ function animNum(id,target){
 
 /* ── ABSENSI SCREEN ── */
 /* MM GALLERY FEED */
+let galleryFilter='semua';
+
 async function renderGalleryFeed(){
   const el=document.getElementById('galleryContent');
   if(!el)return;
@@ -3828,6 +3928,12 @@ async function renderGalleryFeed(){
     const compose=canPostGallery?`
       <div class="social-compose">
         <textarea id="socialCaption" placeholder="Bagikan dokumentasi, karya, atau update kegiatan Multimedia..."></textarea>
+        <select id="socialCategory" class="social-comment-input">
+          <option value="dokumentasi">Dokumentasi</option>
+          <option value="foto">Foto</option>
+          <option value="video">Video</option>
+          <option value="desain">Karya Desain</option>
+        </select>
         <label class="file-pick" for="socialMediaFile">
           <span><i class="fa-solid fa-cloud-arrow-up"></i> Upload file foto/video</span>
           <small id="socialFileName">Tanpa batas MB di sisi form</small>
@@ -3836,11 +3942,38 @@ async function renderGalleryFeed(){
         <input id="socialMediaUrl" placeholder="Atau tempel URL gambar/video opsional">
         <button class="btn-primary" onclick="submitSocialPost()"><i class="fa-solid fa-paper-plane"></i> Posting ke Galery</button>
       </div>`:'';
-    const feed=posts.length?posts.map(renderSocialPost).join(''):`<div class="social-post" style="text-align:center;color:var(--text-light);font-size:0.85rem">Belum ada posting Galery MM.</div>`;
-    el.innerHTML=`<div class="social-layout">${compose}${feed}</div>`;
+    const filters=['semua','foto','video','desain'].map(f=>`
+      <button class="${galleryFilter===f?'active':''}" onclick="setGalleryFilter('${f}')">${galleryFilterLabel(f)}</button>`).join('');
+    const filtered=posts.filter(matchGalleryFilter);
+    const feed=filtered.length?filtered.map(renderSocialPost).join(''):`<div class="social-post" style="text-align:center;color:var(--text-light);font-size:0.85rem">Belum ada posting untuk filter ini.</div>`;
+    el.innerHTML=`<div class="social-layout">${compose}<div class="gallery-filter">${filters}</div>${feed}</div>`;
   }catch(e){
     el.innerHTML=`<div class="locked"><div class="locked-icon" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i></div><h3>Gagal Memuat Galery</h3><p>Coba reload halaman.</p></div>`;
   }
+}
+
+function setGalleryFilter(filter){
+  galleryFilter=filter;
+  renderGalleryFeed();
+}
+
+function galleryFilterLabel(filter){
+  return {semua:'Semua',foto:'Foto',video:'Video',desain:'Karya Desain',dokumentasi:'Dokumentasi'}[filter]||filter;
+}
+
+function inferSocialType(p){
+  const category=String(p.category||'').toLowerCase();
+  const media=String(p.mediaUrl||'');
+  if(category==='desain')return'desain';
+  if(category==='video'||/^data:video\//i.test(media)||/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(media))return'video';
+  if(category==='foto'||/^data:image\//i.test(media)||/\.(png|jpe?g|gif|webp|avif|svg)(\?|#|$)/i.test(media))return'foto';
+  if(/desain|design|poster|logo|banner/i.test(String(p.caption||'')))return'desain';
+  return'dokumentasi';
+}
+
+function matchGalleryFilter(p){
+  if(galleryFilter==='semua')return true;
+  return inferSocialType(p)===galleryFilter;
 }
 
 function renderSocialPost(p){
@@ -3851,6 +3984,11 @@ function renderSocialPost(p){
     </div>`).join('');
   const media=renderSocialMedia(p.mediaUrl);
   const logged=!!currentUser;
+  const type=inferSocialType(p);
+  const commentCount=(p.comments||[]).length;
+  const likes=Number(p.likes||0);
+  const shares=Number(p.shares||0);
+  const engagement=likes+commentCount+shares;
   const adminTools=currentUser?.role==='admin'?`<div class="social-admin-actions">
     <button class="action-btn danger" title="Hapus postingan" onclick="removeSocialPost('${p.id}')"><i class="fa-solid fa-trash"></i></button>
   </div>`:'';
@@ -3864,11 +4002,21 @@ function renderSocialPost(p){
         </div>
         ${adminTools}
       </div>
+      <div class="social-post-kicker">
+        <span class="social-badge"><i class="fa-solid fa-layer-group"></i> ${galleryFilterLabel(type)}</span>
+        <span class="social-badge"><i class="fa-solid fa-chart-line"></i> Engagement ${engagement}</span>
+      </div>
       <div class="social-caption">${esc(p.caption)}</div>
       ${media}
+      <div class="social-engagement">
+        <div class="engagement-pill"><strong>${likes}</strong><span>Like</span></div>
+        <div class="engagement-pill"><strong>${commentCount}</strong><span>Komen</span></div>
+        <div class="engagement-pill"><strong>${shares}</strong><span>Share</span></div>
+        <div class="engagement-pill"><strong>${engagement}</strong><span>Total</span></div>
+      </div>
       <div class="social-actions">
         <button class="social-action ${p.liked?'active':''}" ${logged?'':'disabled'} onclick="likeSocialPost('${p.id}')"><i class="fa-solid fa-heart"></i> ${p.likes||0}</button>
-        <button class="social-action" ${logged?'':'disabled'} onclick="focusSocialComment('${p.id}')"><i class="fa-solid fa-comment"></i> ${(p.comments||[]).length}</button>
+        <button class="social-action" ${logged?'':'disabled'} onclick="focusSocialComment('${p.id}')"><i class="fa-solid fa-comment"></i> ${commentCount}</button>
         <button class="social-action" ${logged?'':'disabled'} onclick="openShareOptions('${p.id}')"><i class="fa-solid fa-share"></i> ${p.shares||0}</button>
       </div>
       <div class="social-comments">${comments}</div>
@@ -3910,6 +4058,7 @@ function readSocialFileAsDataUrl(){
 async function submitSocialPost(){
   const caption=document.getElementById('socialCaption')?.value.trim();
   const url=document.getElementById('socialMediaUrl')?.value.trim();
+  const category=document.getElementById('socialCategory')?.value||'dokumentasi';
   if(!caption||caption.length<3){toast('Caption minimal 3 karakter.','error');return;}
   let mediaUrl=url;
   try{
@@ -3919,7 +4068,7 @@ async function submitSocialPost(){
     toast('File gagal dibaca. Coba pilih ulang file.','error');
     return;
   }
-  const {error}=await createSocialPost(caption,mediaUrl);
+  const {error}=await createSocialPost(caption,mediaUrl,category);
   if(error){toast(error.message||'Gagal posting.','error');return;}
   toast('Posting Galery MM terkirim.','success');
   renderGalleryFeed();
@@ -4728,7 +4877,7 @@ async function renderAdmin(){
   }
   el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem"></i><p style="margin-top:12px;font-size:0.8rem">Memuat Panel Kontrol Admin...</p></div>`;
   try{
-    const [users,absensi,grades]=await Promise.all([getUsers(),getAbsensi(),getGrades()]);
+    const [users,absensi,grades,auditLogs]=await Promise.all([getUsers(),getAbsensi(),getGrades(),adminTab==='audit'?getAuditLogs():Promise.resolve([])]);
     saveManualGrades(grades);
     const total=users.length;
     const anggota=users.filter(x=>x.role==='anggota').length;
@@ -4761,12 +4910,14 @@ async function renderAdmin(){
         <button class="tab-btn ${adminTab==='absen'?'active':''}" onclick="swTab('absen')"><i class="fa-solid fa-calendar-check"></i> Absensi</button>
         <button class="tab-btn ${adminTab==='rekap'?'active':''}" onclick="swTab('rekap')"><i class="fa-solid fa-chart-simple"></i> Rekap & Profile</button>
         <button class="tab-btn ${adminTab==='team'?'active':''}" onclick="swTab('team')"><i class="fa-solid fa-user-gear"></i> Kelola Tim</button>
+        <button class="tab-btn ${adminTab==='audit'?'active':''}" onclick="swTab('audit')"><i class="fa-solid fa-shield-halved"></i> Audit</button>
       </div>
       
       <div class="tab-panel ${adminTab==='users'?'active':''}" id="tp-users">${renderUsersTable(users)}</div>
       <div class="tab-panel ${adminTab==='absen'?'active':''}" id="tp-absen">${renderAbsenTable(absensi,users)}</div>
       <div class="tab-panel ${adminTab==='rekap'?'active':''}" id="tp-rekap">${renderAdminRecap(users,absensi)}</div>
       <div class="tab-panel ${adminTab==='team'?'active':''}" id="tp-team">${renderTeamTable()}</div>
+      <div class="tab-panel ${adminTab==='audit'?'active':''}" id="tp-audit">${renderAuditLogTable(auditLogs)}</div>
     </div>`;
     if(adminTab==='absen')setTimeout(()=>{showDailyQr(false);loadSheetWebhookConfig(false);},0);
   }catch(e){
@@ -4816,6 +4967,46 @@ function renderUsersTable(users){
             <th>Role</th>
             <th>Tanggal Registrasi</th>
             <th>Tindakan</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderAuditLogTable(logs){
+  const rows=(logs||[]).length?logs.map(l=>`
+    <tr>
+      <td>
+        <div style="font-weight:800">${esc(l.adminName||'Admin')}</div>
+        <div style="font-size:0.7rem;color:var(--text-muted)">@${esc(l.adminUsername||'-')}</div>
+      </td>
+      <td><span class="sb sb-izin">${esc(l.action||'-')}</span></td>
+      <td>${esc(l.targetType||'-')}</td>
+      <td style="font-size:0.75rem;color:var(--text-muted);font-weight:700">${esc(l.detail||'-')}</td>
+      <td>${l.createdAt?new Date(l.createdAt).toLocaleString('id-ID'):'-'}</td>
+    </tr>`).join(''):`<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-light)">Belum ada audit log admin.</td></tr>`;
+  return `
+  <div class="tbl-wrap">
+    <div class="tbl-head">
+      <div>
+        <h3>Log Audit Admin</h3>
+        <p style="color:var(--text-muted);font-size:0.76rem;font-weight:700;margin-top:4px">Mencatat aksi hapus QR, hapus postingan, dan ubah role.</p>
+      </div>
+      <div class="tbl-controls">
+        <input class="ipt ipt-search" placeholder="Cari audit..." oninput="filterTbl('auditTable',this.value)">
+      </div>
+    </div>
+    <div class="tbl-scroll">
+      <table id="auditTable">
+        <thead>
+          <tr>
+            <th>Admin</th>
+            <th>Aksi</th>
+            <th>Target</th>
+            <th>Detail</th>
+            <th>Waktu</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -5226,6 +5417,10 @@ async function loadSheetWebhookConfig(showToast=false){
       box.innerHTML='<i class="fa-solid fa-circle-info"></i> Webhook belum diisi. Data tetap aman di Supabase, tetapi belum otomatis masuk Google Sheet.';
     }
   }
+  if(!url&&currentUser?.role==='admin'&&!sheetWebhookWarned){
+    sheetWebhookWarned=true;
+    toast('Webhook Spreadsheet belum aktif, absen belum otomatis masuk Google Sheet.','info');
+  }
   if(showToast)toast(url?'Webhook Spreadsheet aktif.':'Webhook belum dikonfigurasi.','info');
 }
 
@@ -5279,12 +5474,16 @@ function renderDailyQrResult(data){
   const expiresAt=data?.expiresAt?new Date(data.expiresAt):null;
   const expiresText=expiresAt?expiresAt.toLocaleString('id-ID'):'24 jam setelah dibuat';
   const statusText=data?.active?'Aktif':'Tidak aktif / kadaluarsa';
+  const badge=data?.active
+    ?'<span class="qr-status-badge active"><i class="fa-solid fa-circle-check"></i> Aktif hari ini</span>'
+    :'<span class="qr-status-badge inactive"><i class="fa-solid fa-clock"></i> Tidak aktif</span>';
   const qrImage=data?.active?`
     <div class="qr-image-wrap">
       <img src="${qrUrl}" alt="QR Harian MM">
       <small>QR ini otomatis dari kode harian. Tampilkan di kelas/sekolah untuk discan siswa.</small>
     </div>`:`<div style="margin-top:8px;font-size:0.78rem;font-weight:800;color:var(--text-muted)">Kode lama tidak berlaku. Buat QR baru jika ingin mewajibkan scan lagi.</div>`;
   return `
+    <div>${badge}</div>
     <div><i class="fa-solid fa-qrcode"></i> Kode ${esc(data?.date||todayStr())}: <strong>${esc(code)}</strong></div>
     <div style="margin-top:6px;font-size:0.78rem;font-weight:800">Status: ${esc(statusText)} - Kadaluarsa: ${esc(expiresText)}</div>
     ${qrImage}`;
