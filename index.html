@@ -1419,6 +1419,63 @@ img {
   text-align: center;
 }
 
+.admin-recap-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.admin-recap-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-recap-card strong {
+  display: block;
+  color: var(--primary);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.admin-recap-card span {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.score-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: var(--primary-glow);
+  color: var(--primary);
+}
+
+.score-pill.good {
+  background: var(--green-light);
+  color: var(--green);
+}
+
+.score-pill.warn {
+  background: var(--amber-light);
+  color: var(--amber);
+}
+
+.score-pill.bad {
+  background: var(--red-light);
+  color: var(--red);
+}
+
 @media(min-width: 900px) {
   .absen-wrap {
     grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
@@ -1437,6 +1494,10 @@ img {
   .profile-grid {
     grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
     align-items: start;
+  }
+
+  .admin-recap-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -3283,6 +3344,8 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 
 const STATUS_LABELS={hadir:'Hadir',sakit:'Sakit',izin:'Izin',alfa:'Alfa'};
 const STATUS_ICONS={hadir:'fa-circle-check',sakit:'fa-face-frown',izin:'fa-file-signature',alfa:'fa-circle-xmark'};
+const APP_START_DATE='2026-05-31';
+const ATTENDANCE_SCORE={hadir:100,izin:80,sakit:80,alfa:0};
 const SCHOOL_LOCATION={
   name:'MTs Plus Al Ishlah Ciganitri',
   address:'Jl. Ciganitri Tengah No.66, Cipagalo, Bojongsoang, Kabupaten Bandung',
@@ -3313,6 +3376,63 @@ function buildAttendanceMeta(status,note,loc){
   if(note)parts.push(`note:${note.replace(/\s+/g,' ').slice(0,220)}`);
   parts.push(`validation:${status==='hadir'?'gps-valid':'menunggu-admin'}`);
   return parts.join(' | ');
+}
+
+function dateOnly(d){
+  const x=new Date(d);
+  return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+}
+
+function daysInclusive(start,end){
+  const s=new Date(start+'T00:00:00');
+  const e=new Date(end+'T00:00:00');
+  if(e<s)return 0;
+  return Math.floor((e-s)/86400000)+1;
+}
+
+function getScoreClass(score){
+  if(score>=85)return'good';
+  if(score>=65)return'warn';
+  return'bad';
+}
+
+function buildAttendanceRecap(users,absensi){
+  const today=todayStr();
+  const totalDays=Math.max(1,daysInclusive(APP_START_DATE,today));
+  const relevant=absensi.filter(a=>a.date>=APP_START_DATE&&a.date<=today);
+  return users.map(u=>{
+    const records=relevant.filter(a=>a.userId===u.id);
+    const byDate=new Map();
+    records.forEach(a=>{
+      const current=byDate.get(a.date);
+      if(!current||a.timestamp>current.timestamp)byDate.set(a.date,a);
+    });
+    const unique=[...byDate.values()];
+    const count=status=>unique.filter(a=>a.status===status).length;
+    const hadir=count('hadir');
+    const izin=count('izin');
+    const sakit=count('sakit');
+    const alfa=count('alfa');
+    const tercatat=unique.length;
+    const belum=Math.max(0,totalDays-tercatat);
+    const points=unique.reduce((sum,a)=>sum+(ATTENDANCE_SCORE[a.status]??0),0);
+    const score=Math.round(points/(totalDays*100)*100);
+    const last=unique.sort((a,b)=>b.timestamp-a.timestamp)[0]||null;
+    return {
+      user:u,
+      totalDays,
+      hadir,
+      izin,
+      sakit,
+      alfa,
+      belum,
+      tercatat,
+      points,
+      score,
+      last,
+      records
+    };
+  }).sort((a,b)=>b.score-a.score||b.hadir-a.hadir||a.user.name.localeCompare(b.user.name));
 }
 
 function distanceInMeters(a,b){
@@ -3888,11 +4008,13 @@ async function renderAdmin(){
       <div class="tabs">
         <button class="tab-btn ${adminTab==='users'?'active':''}" onclick="swTab('users')"><i class="fa-solid fa-users"></i> Pengguna</button>
         <button class="tab-btn ${adminTab==='absen'?'active':''}" onclick="swTab('absen')"><i class="fa-solid fa-calendar-check"></i> Absensi</button>
+        <button class="tab-btn ${adminTab==='rekap'?'active':''}" onclick="swTab('rekap')"><i class="fa-solid fa-chart-simple"></i> Rekap & Profile</button>
         <button class="tab-btn ${adminTab==='team'?'active':''}" onclick="swTab('team')"><i class="fa-solid fa-user-gear"></i> Kelola Tim</button>
       </div>
       
       <div class="tab-panel ${adminTab==='users'?'active':''}" id="tp-users">${renderUsersTable(users)}</div>
       <div class="tab-panel ${adminTab==='absen'?'active':''}" id="tp-absen">${renderAbsenTable(absensi,users)}</div>
+      <div class="tab-panel ${adminTab==='rekap'?'active':''}" id="tp-rekap">${renderAdminRecap(users,absensi)}</div>
       <div class="tab-panel ${adminTab==='team'?'active':''}" id="tp-team">${renderTeamTable()}</div>
     </div>`;
   }catch(e){
@@ -4002,6 +4124,7 @@ function renderAbsenTable(absensi,users){
       <div class="tbl-controls">
         <input class="ipt ipt-search" placeholder="Cari nama..." oninput="filterTbl('absenTable',this.value)">
         <button class="export-btn" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> Unduh CSV</button>
+        <button class="export-btn" onclick="exportAbsensiExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
       </div>
     </div>
     <div class="tbl-scroll">
@@ -4021,6 +4144,132 @@ function renderAbsenTable(absensi,users){
       </table>
     </div>
   </div>`;
+}
+
+function renderAdminRecap(users,absensi){
+  const recap=buildAttendanceRecap(users,absensi);
+  const today=todayStr();
+  const totalUsers=users.length;
+  const totalMembers=users.filter(u=>u.role==='anggota'||u.role==='admin').length;
+  const avgScore=recap.length?Math.round(recap.reduce((sum,r)=>sum+r.score,0)/recap.length):0;
+  const perfect=recap.filter(r=>r.score>=100).length;
+  const rows=recap.length===0
+    ?`<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--text-light)">Belum ada profile pengguna</td></tr>`
+    :recap.map(r=>{
+      const u=r.user;
+      return `<tr>
+        <td>
+          <div style="font-weight:800">${esc(u.name)}</div>
+          <div style="font-size:0.7rem;color:var(--text-muted)">@${esc(u.username)} · ${esc(u.role)}</div>
+        </td>
+        <td>${u.createdAt?new Date(u.createdAt).toLocaleDateString('id-ID'):'-'}</td>
+        <td>${r.totalDays}</td>
+        <td><span class="sb sb-hadir">${r.hadir}</span></td>
+        <td><span class="sb sb-izin">${r.izin}</span></td>
+        <td><span class="sb sb-sakit">${r.sakit}</span></td>
+        <td><span class="sb sb-alfa">${r.alfa}</span></td>
+        <td>${r.belum}</td>
+        <td>${r.tercatat}</td>
+        <td><span class="score-pill ${getScoreClass(r.score)}">${r.score}</span></td>
+        <td>${r.last?`${STATUS_LABELS[r.last.status]||r.last.status} · ${fmtDate(r.last.date)}`:'Belum ada'}</td>
+        <td><button class="action-btn" onclick="showAdminProfileDetail('${u.id}')" title="Lihat Profile"><i class="fa-solid fa-eye"></i></button></td>
+      </tr>`;
+    }).join('');
+
+  return `
+    <div class="admin-recap-grid">
+      <div class="admin-recap-card"><strong>${totalUsers}</strong><span>Total Profile</span></div>
+      <div class="admin-recap-card"><strong>${totalMembers}</strong><span>Anggota/Admin</span></div>
+      <div class="admin-recap-card"><strong>${avgScore}</strong><span>Rata-rata Nilai</span></div>
+      <div class="admin-recap-card"><strong>${perfect}</strong><span>Nilai 100</span></div>
+    </div>
+    <div class="tbl-wrap">
+      <div class="tbl-head">
+        <div>
+          <h3>Rekap Profile & Nilai Kehadiran</h3>
+          <p style="color:var(--text-muted);font-size:0.76rem;font-weight:700;margin-top:4px">Periode ${fmtDate(APP_START_DATE)} sampai ${fmtDate(today)}. Hadir=100, Izin/Sakit=80, Alfa/Belum=0.</p>
+        </div>
+        <div class="tbl-controls">
+          <input class="ipt ipt-search" placeholder="Cari profile..." oninput="filterTbl('recapTable',this.value)">
+          <button class="export-btn" onclick="exportRecapExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
+        </div>
+      </div>
+      <div class="tbl-scroll">
+        <table id="recapTable">
+          <thead>
+            <tr>
+              <th>Profile</th>
+              <th>Daftar</th>
+              <th>Hari</th>
+              <th>Hadir</th>
+              <th>Izin</th>
+              <th>Sakit</th>
+              <th>Alfa</th>
+              <th>Belum</th>
+              <th>Tercatat</th>
+              <th>Nilai</th>
+              <th>Terakhir</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+async function showAdminProfileDetail(uid){
+  try{
+    const [users,absensi]=await Promise.all([getUsers(),getAbsensi()]);
+    const user=users.find(u=>u.id===uid);
+    if(!user){toast('Profile tidak ditemukan.','error');return;}
+    const recap=buildAttendanceRecap([user],absensi)[0];
+    const logs=recap.records.sort((a,b)=>b.timestamp-a.timestamp);
+    const logHtml=logs.length===0
+      ?`<p style="text-align:center;color:var(--text-light);font-size:0.8rem;padding:20px 0">Belum ada catatan absensi.</p>`
+      :logs.map(a=>{
+        const meta=parseAttendanceMeta(a.addedBy);
+        return `<div class="profile-log-item">
+          <div class="profile-log-top">
+            <div>
+              <div style="font-weight:800;font-size:0.84rem">${fmtDate(a.date)}</div>
+              <div style="color:var(--text-muted);font-size:0.7rem;font-weight:700">${fmtTime(a.timestamp)} WIB</div>
+            </div>
+            <span class="sb sb-${a.status}">${STATUS_LABELS[a.status]||a.status}</span>
+          </div>
+          <div class="profile-log-note">
+            ${meta.note?`Catatan: ${esc(meta.note)}<br>`:''}
+            Validasi: ${esc(meta.validation)}
+            ${meta.location?`<br>Lokasi: ${esc(meta.location)}`:''}
+          </div>
+        </div>`;
+      }).join('');
+
+    const overlay=document.createElement('div');
+    overlay.className='overlay show';
+    overlay.innerHTML=`
+      <div class="modal" style="max-width:720px">
+        <button class="modal-close" onclick="this.closest('.overlay').remove()"><i class="fas fa-times"></i></button>
+        <div class="profile-hero" style="margin-bottom:18px">
+          <div class="profile-avatar">${initialsOf(user.name)}</div>
+          <div>
+            <h3>${esc(user.name)}</h3>
+            <p>@${esc(user.username)} - ${esc(user.role)}</p>
+          </div>
+        </div>
+        <div class="recap-grid" style="margin-bottom:16px">
+          <div class="recap-box"><strong>${recap.score}</strong><span>Nilai</span></div>
+          <div class="recap-box"><strong>${recap.hadir}</strong><span>Hadir</span></div>
+          <div class="recap-box"><strong>${recap.izin+recap.sakit}</strong><span>Izin/Sakit</span></div>
+          <div class="recap-box"><strong>${recap.alfa+recap.belum}</strong><span>Alfa/Belum</span></div>
+        </div>
+        <h3 style="font-size:1rem;font-weight:800;margin-bottom:12px">Riwayat Profile</h3>
+        <div class="profile-log" style="max-height:340px;overflow:auto">${logHtml}</div>
+      </div>`;
+    document.body.appendChild(overlay);
+  }catch(e){
+    toast('Gagal memuat detail profile.','error');
+  }
 }
 
 function renderTeamTable() {
@@ -4200,6 +4449,88 @@ async function exportCSV(){
     const link=document.createElement('a');link.href=url;link.download=`absensi_multimedia_${todayStr()}.csv`;link.click();URL.revokeObjectURL(url);
     toast('Data CSV berhasil diunduh!','success');
   }catch(e){toast('Gagal mengekspor data!','error');}
+}
+
+function downloadExcel(filename,tableHtml){
+  const html=`
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+      <head>
+        <meta charset="UTF-8">
+        <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Rekap</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+      </head>
+      <body>${tableHtml}</body>
+    </html>`;
+  const blob=new Blob(['\uFEFF'+html],{type:'application/vnd.ms-excel;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+async function exportAbsensiExcel(){
+  try{
+    const absensi=await getAbsensi();
+    if(!absensi.length){toast('Belum ada data!','info');return;}
+    const rows=[...absensi].sort((a,b)=>b.timestamp-a.timestamp).map(a=>{
+      const meta=parseAttendanceMeta(a.addedBy);
+      return `<tr>
+        <td>${esc(a.name)}</td>
+        <td>${esc(a.username)}</td>
+        <td>${fmtDate(a.date)}</td>
+        <td>${fmtTime(a.timestamp)}</td>
+        <td>${STATUS_LABELS[a.status]||a.status}</td>
+        <td>${esc(meta.note)}</td>
+        <td>${esc(meta.validation)}</td>
+        <td>${esc(meta.location)}</td>
+      </tr>`;
+    }).join('');
+    downloadExcel(`log_absensi_multimedia_${todayStr()}.xls`,`
+      <table border="1">
+        <thead><tr><th>Nama</th><th>Username</th><th>Tanggal</th><th>Waktu</th><th>Status</th><th>Catatan</th><th>Validasi</th><th>Lokasi</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`);
+    toast('Excel log absensi berhasil diunduh.','success');
+  }catch(e){toast('Gagal export Excel absensi.','error');}
+}
+
+async function exportRecapExcel(){
+  try{
+    const [users,absensi]=await Promise.all([getUsers(),getAbsensi()]);
+    const recap=buildAttendanceRecap(users,absensi);
+    if(!recap.length){toast('Belum ada profile untuk diekspor.','info');return;}
+    const rows=recap.map(r=>{
+      const u=r.user;
+      return `<tr>
+        <td>${esc(u.name)}</td>
+        <td>${esc(u.username)}</td>
+        <td>${esc(u.role)}</td>
+        <td>${u.createdAt?new Date(u.createdAt).toLocaleDateString('id-ID'):'-'}</td>
+        <td>${fmtDate(APP_START_DATE)} - ${fmtDate(todayStr())}</td>
+        <td>${r.totalDays}</td>
+        <td>${r.hadir}</td>
+        <td>${r.izin}</td>
+        <td>${r.sakit}</td>
+        <td>${r.alfa}</td>
+        <td>${r.belum}</td>
+        <td>${r.tercatat}</td>
+        <td>${r.score}</td>
+        <td>${r.last?`${STATUS_LABELS[r.last.status]||r.last.status} - ${fmtDate(r.last.date)}`:'Belum ada'}</td>
+      </tr>`;
+    }).join('');
+    downloadExcel(`rekap_profile_kehadiran_${todayStr()}.xls`,`
+      <table border="1">
+        <thead>
+          <tr>
+            <th>Nama</th><th>Username</th><th>Role</th><th>Tanggal Daftar</th><th>Periode</th><th>Total Hari</th>
+            <th>Hadir</th><th>Izin</th><th>Sakit</th><th>Alfa</th><th>Belum Absen</th><th>Tercatat</th><th>Nilai</th><th>Absensi Terakhir</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`);
+    toast('Excel rekap profile berhasil diunduh.','success');
+  }catch(e){toast('Gagal export Excel rekap.','error');}
 }
 
 /* ── MODAL LAYERS LOGIC ── */

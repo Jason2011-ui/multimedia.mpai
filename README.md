@@ -17,6 +17,7 @@ Website ini adalah aplikasi landing page dan dashboard untuk Eskul Multimedia MT
 - Halaman `Sosial Media` dengan tautan ke Instagram, TikTok, YouTube, dan Discord.
 - Halaman `Absensi Digital` untuk mencatat kehadiran.
 - Panel `Admin` untuk mengelola pengguna dan absensi dari backend.
+- Tab admin `Rekap & Profile` untuk melihat semua profile, rekap Hadir/Izin/Sakit/Alfa, nilai kehadiran, dan export Excel.
 - Modal `Masuk` dan `Daftar` untuk autentikasi pengguna.
 
 ## Struktur Proyek
