@@ -724,8 +724,8 @@ DECLARE
   v_id UUID;
 BEGIN
   v_user := mm_current_user(p_token);
-  IF v_user.role <> 'admin' THEN
-    RAISE EXCEPTION 'Hanya admin yang dapat membuat posting sosial';
+  IF v_user.role NOT IN ('admin', 'anggota') THEN
+    RAISE EXCEPTION 'Hanya anggota dan admin yang dapat membuat posting sosial';
   END IF;
 
   IF LENGTH(TRIM(p_caption)) < 3 THEN

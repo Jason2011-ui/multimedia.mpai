@@ -3824,7 +3824,8 @@ async function renderGalleryFeed(){
   el.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-light)"><i class="fas fa-spinner fa-spin"></i><p style="margin-top:10px;font-size:0.8rem">Memuat Galery MM...</p></div>`;
   try{
     const posts=await getSocialFeed();
-    const compose=currentUser?.role==='admin'?`
+    const canPostGallery=currentUser&&(currentUser.role==='admin'||currentUser.role==='anggota');
+    const compose=canPostGallery?`
       <div class="social-compose">
         <textarea id="socialCaption" placeholder="Bagikan dokumentasi, karya, atau update kegiatan Multimedia..."></textarea>
         <label class="file-pick" for="socialMediaFile">
