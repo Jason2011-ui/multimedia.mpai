@@ -33,6 +33,67 @@ CREATE TABLE IF NOT EXISTS mm_sessions (
   revoked     BOOLEAN NOT NULL DEFAULT FALSE
 );
 
+CREATE TABLE IF NOT EXISTS mm_attendance_grades (
+  user_id     TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  grade       TEXT NOT NULL DEFAULT '',
+  updated_by  TEXT REFERENCES users(id) ON DELETE SET NULL,
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS mm_typing_scores (
+  id          UUID PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
+  user_id     TEXT REFERENCES users(id) ON DELETE CASCADE,
+  username    TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  wpm         INTEGER NOT NULL,
+  accuracy    INTEGER NOT NULL,
+  correct     INTEGER NOT NULL,
+  wrong       INTEGER NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS mm_social_posts (
+  id          UUID PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
+  user_id     TEXT REFERENCES users(id) ON DELETE SET NULL,
+  username    TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  caption     TEXT NOT NULL,
+  media_url   TEXT,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS mm_social_likes (
+  post_id     UUID REFERENCES mm_social_posts(id) ON DELETE CASCADE,
+  user_id     TEXT REFERENCES users(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (post_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS mm_social_comments (
+  id          UUID PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
+  post_id     UUID REFERENCES mm_social_posts(id) ON DELETE CASCADE,
+  user_id     TEXT REFERENCES users(id) ON DELETE SET NULL,
+  username    TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  body        TEXT NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS mm_social_shares (
+  id          UUID PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
+  post_id     UUID REFERENCES mm_social_posts(id) ON DELETE CASCADE,
+  user_id     TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS mm_daily_qr (
+  date        TEXT PRIMARY KEY,
+  code        TEXT NOT NULL,
+  active      BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by  TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
 DELETE FROM absensi a
 USING absensi b
 WHERE a.ctid < b.ctid
@@ -270,7 +331,8 @@ CREATE OR REPLACE FUNCTION mm_submit_absensi(
   p_note TEXT DEFAULT '',
   p_lat DOUBLE PRECISION DEFAULT NULL,
   p_lng DOUBLE PRECISION DEFAULT NULL,
-  p_accuracy DOUBLE PRECISION DEFAULT NULL
+  p_accuracy DOUBLE PRECISION DEFAULT NULL,
+  p_qr_code TEXT DEFAULT ''
 )
 RETURNS JSONB
 LANGUAGE PLPGSQL
@@ -284,6 +346,7 @@ DECLARE
   v_distance DOUBLE PRECISION;
   v_added_by TEXT;
   v_id TEXT := 'ab' || replace(extensions.gen_random_uuid()::TEXT, '-', '');
+  v_qr_code TEXT;
 BEGIN
   v_user := mm_current_user(p_token);
 
@@ -314,9 +377,19 @@ BEGIN
       RAISE EXCEPTION 'Lokasi di luar radius sekolah: % meter', round(v_distance::numeric);
     END IF;
 
+    SELECT code INTO v_qr_code
+    FROM mm_daily_qr
+    WHERE date = v_today AND active = TRUE
+    LIMIT 1;
+
+    IF v_qr_code IS NOT NULL AND TRIM(COALESCE(p_qr_code, '')) <> v_qr_code THEN
+      RAISE EXCEPTION 'Kode QR harian tidak valid';
+    END IF;
+
     v_added_by := 'self | gps:' || round(v_distance::numeric)::TEXT || 'm | acc:' ||
       round(p_accuracy::numeric)::TEXT || 'm | lat:' || round(p_lat::numeric, 6)::TEXT ||
       ' | lng:' || round(p_lng::numeric, 6)::TEXT ||
+      CASE WHEN v_qr_code IS NOT NULL THEN ' | qr:valid' ELSE '' END ||
       CASE WHEN COALESCE(TRIM(p_note), '') <> '' THEN ' | note:' || left(regexp_replace(TRIM(p_note), '\s+', ' ', 'g'), 220) ELSE '' END ||
       ' | validation:gps-valid-server';
   ELSE
@@ -469,32 +542,378 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION mm_get_grades(p_token TEXT)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user users;
+BEGIN
+  v_user := mm_current_user(p_token);
+  IF v_user.role <> 'admin' THEN
+    RAISE EXCEPTION 'Hanya admin yang dapat melihat nilai';
+  END IF;
+
+  RETURN (
+    SELECT COALESCE(jsonb_object_agg(user_id, grade), '{}'::jsonb)
+    FROM mm_attendance_grades
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_set_grade(p_token TEXT, p_user_id TEXT, p_grade TEXT)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_admin users;
+  v_grade TEXT := left(regexp_replace(TRIM(COALESCE(p_grade, '')), '[^[:alnum:][:space:].,:+-]', '', 'g'), 24);
+BEGIN
+  v_admin := mm_current_user(p_token);
+  IF v_admin.role <> 'admin' THEN
+    RAISE EXCEPTION 'Hanya admin yang dapat mengisi nilai';
+  END IF;
+
+  IF v_grade = '' THEN
+    DELETE FROM mm_attendance_grades WHERE user_id = p_user_id;
+  ELSE
+    INSERT INTO mm_attendance_grades (user_id, grade, updated_by, updated_at)
+    VALUES (p_user_id, v_grade, v_admin.id, NOW())
+    ON CONFLICT (user_id) DO UPDATE
+    SET grade = EXCLUDED.grade,
+        updated_by = EXCLUDED.updated_by,
+        updated_at = NOW();
+  END IF;
+
+  RETURN jsonb_build_object('ok', TRUE, 'grade', v_grade);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_validate_absensi(p_token TEXT, p_absensi_id TEXT, p_decision TEXT)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_admin users;
+  v_suffix TEXT;
+BEGIN
+  v_admin := mm_current_user(p_token);
+  IF v_admin.role <> 'admin' THEN
+    RAISE EXCEPTION 'Hanya admin yang dapat validasi catatan';
+  END IF;
+
+  IF p_decision NOT IN ('diterima', 'ditolak') THEN
+    RAISE EXCEPTION 'Keputusan validasi tidak valid';
+  END IF;
+
+  v_suffix := 'validation:' || p_decision || '-admin:' || v_admin.username;
+
+  UPDATE absensi
+  SET added_by = regexp_replace(COALESCE(added_by, ''), '\s*\|\s*validation:[^|]*', '', 'g') || ' | ' || v_suffix
+  WHERE id = p_absensi_id;
+
+  RETURN jsonb_build_object('ok', TRUE, 'validation', v_suffix);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_submit_typing_score(
+  p_token TEXT,
+  p_wpm INTEGER,
+  p_accuracy INTEGER,
+  p_correct INTEGER,
+  p_wrong INTEGER
+)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user users;
+  v_id UUID;
+BEGIN
+  v_user := mm_current_user(p_token);
+  IF p_wpm < 0 OR p_accuracy < 0 OR p_accuracy > 100 THEN
+    RAISE EXCEPTION 'Skor typing tidak valid';
+  END IF;
+
+  INSERT INTO mm_typing_scores (user_id, username, name, wpm, accuracy, correct, wrong)
+  VALUES (v_user.id, v_user.username, v_user.name, p_wpm, p_accuracy, p_correct, p_wrong)
+  RETURNING id INTO v_id;
+
+  RETURN jsonb_build_object('id', v_id);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_get_typing_leaderboard()
+RETURNS JSONB
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(jsonb_agg(jsonb_build_object(
+    'name', name,
+    'username', username,
+    'wpm', wpm,
+    'accuracy', accuracy,
+    'correct', correct,
+    'wrong', wrong,
+    'at', floor(extract(epoch FROM created_at) * 1000)::BIGINT
+  ) ORDER BY wpm DESC, accuracy DESC, created_at ASC), '[]'::jsonb)
+  FROM (
+    SELECT *
+    FROM (
+      SELECT DISTINCT ON (user_id) *
+      FROM mm_typing_scores
+      ORDER BY user_id, wpm DESC, accuracy DESC, created_at ASC
+    ) best_per_user
+    ORDER BY wpm DESC, accuracy DESC, created_at ASC
+    LIMIT 10
+  ) best;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_get_social_feed(p_token TEXT DEFAULT '')
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user users;
+  v_user_id TEXT := NULL;
+BEGIN
+  IF COALESCE(TRIM(p_token), '') <> '' THEN
+    BEGIN
+      v_user := mm_current_user(p_token);
+      v_user_id := v_user.id;
+    EXCEPTION WHEN OTHERS THEN
+      v_user_id := NULL;
+    END;
+  END IF;
+
+  RETURN (
+    SELECT COALESCE(jsonb_agg(jsonb_build_object(
+      'id', p.id,
+      'name', p.name,
+      'username', p.username,
+      'caption', p.caption,
+      'mediaUrl', p.media_url,
+      'createdAt', p.created_at,
+      'liked', CASE WHEN v_user_id IS NULL THEN FALSE ELSE EXISTS (SELECT 1 FROM mm_social_likes l WHERE l.post_id = p.id AND l.user_id = v_user_id) END,
+      'likes', (SELECT COUNT(*) FROM mm_social_likes l WHERE l.post_id = p.id),
+      'shares', (SELECT COUNT(*) FROM mm_social_shares s WHERE s.post_id = p.id),
+      'comments', COALESCE((SELECT jsonb_agg(jsonb_build_object('id', c.id, 'name', c.name, 'username', c.username, 'body', c.body, 'createdAt', c.created_at) ORDER BY c.created_at ASC) FROM mm_social_comments c WHERE c.post_id = p.id), '[]'::jsonb)
+    ) ORDER BY p.created_at DESC), '[]'::jsonb)
+    FROM mm_social_posts p
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_create_social_post(p_token TEXT, p_caption TEXT, p_media_url TEXT DEFAULT '')
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user users;
+  v_id UUID;
+BEGIN
+  v_user := mm_current_user(p_token);
+  IF v_user.role <> 'admin' THEN
+    RAISE EXCEPTION 'Hanya admin yang dapat membuat posting sosial';
+  END IF;
+
+  IF LENGTH(TRIM(p_caption)) < 3 THEN
+    RAISE EXCEPTION 'Caption minimal 3 karakter';
+  END IF;
+
+  INSERT INTO mm_social_posts (user_id, username, name, caption, media_url)
+  VALUES (v_user.id, v_user.username, v_user.name, left(TRIM(p_caption), 700), NULLIF(TRIM(p_media_url), ''))
+  RETURNING id INTO v_id;
+
+  RETURN jsonb_build_object('id', v_id);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_toggle_social_like(p_token TEXT, p_post_id UUID)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user users;
+  v_liked BOOLEAN;
+BEGIN
+  v_user := mm_current_user(p_token);
+  IF EXISTS (SELECT 1 FROM mm_social_likes WHERE post_id = p_post_id AND user_id = v_user.id) THEN
+    DELETE FROM mm_social_likes WHERE post_id = p_post_id AND user_id = v_user.id;
+    v_liked := FALSE;
+  ELSE
+    INSERT INTO mm_social_likes (post_id, user_id) VALUES (p_post_id, v_user.id);
+    v_liked := TRUE;
+  END IF;
+  RETURN jsonb_build_object('liked', v_liked);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_add_social_comment(p_token TEXT, p_post_id UUID, p_body TEXT)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user users;
+  v_id UUID;
+BEGIN
+  v_user := mm_current_user(p_token);
+  IF LENGTH(TRIM(p_body)) < 2 THEN
+    RAISE EXCEPTION 'Komentar terlalu pendek';
+  END IF;
+
+  INSERT INTO mm_social_comments (post_id, user_id, username, name, body)
+  VALUES (p_post_id, v_user.id, v_user.username, v_user.name, left(TRIM(p_body), 240))
+  RETURNING id INTO v_id;
+
+  RETURN jsonb_build_object('id', v_id);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_add_social_share(p_token TEXT, p_post_id UUID)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user users;
+BEGIN
+  v_user := mm_current_user(p_token);
+  INSERT INTO mm_social_shares (post_id, user_id) VALUES (p_post_id, v_user.id);
+  RETURN jsonb_build_object('ok', TRUE);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_admin_set_daily_qr(p_token TEXT, p_code TEXT DEFAULT '')
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_admin users;
+  v_today TEXT := to_char(NOW() AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD');
+  v_code TEXT := upper(COALESCE(NULLIF(TRIM(p_code), ''), substr(replace(extensions.gen_random_uuid()::TEXT, '-', ''), 1, 8)));
+BEGIN
+  v_admin := mm_current_user(p_token);
+  IF v_admin.role <> 'admin' THEN
+    RAISE EXCEPTION 'Hanya admin yang dapat membuat kode QR harian';
+  END IF;
+
+  INSERT INTO mm_daily_qr (date, code, active, created_by, created_at)
+  VALUES (v_today, v_code, TRUE, v_admin.id, NOW())
+  ON CONFLICT (date) DO UPDATE
+  SET code = EXCLUDED.code, active = TRUE, created_by = EXCLUDED.created_by, created_at = NOW();
+
+  RETURN jsonb_build_object('date', v_today, 'code', v_code);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_get_daily_qr(p_token TEXT)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_admin users;
+  v_today TEXT := to_char(NOW() AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD');
+  v_row mm_daily_qr;
+BEGIN
+  v_admin := mm_current_user(p_token);
+  IF v_admin.role <> 'admin' THEN
+    RAISE EXCEPTION 'Hanya admin yang dapat melihat kode QR';
+  END IF;
+
+  SELECT * INTO v_row FROM mm_daily_qr WHERE date = v_today LIMIT 1;
+  RETURN jsonb_build_object('date', v_today, 'code', v_row.code, 'active', COALESCE(v_row.active, FALSE));
+END;
+$$;
+
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE absensi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mm_attendance_grades ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mm_typing_scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mm_social_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mm_social_likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mm_social_comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mm_social_shares ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mm_daily_qr ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "allow_all_users" ON users;
 DROP POLICY IF EXISTS "allow_all_absensi" ON absensi;
 DROP POLICY IF EXISTS "deny_direct_users" ON users;
 DROP POLICY IF EXISTS "deny_direct_absensi" ON absensi;
 DROP POLICY IF EXISTS "deny_direct_sessions" ON mm_sessions;
+DROP POLICY IF EXISTS "deny_direct_grades" ON mm_attendance_grades;
+DROP POLICY IF EXISTS "deny_direct_typing" ON mm_typing_scores;
+DROP POLICY IF EXISTS "deny_direct_social_posts" ON mm_social_posts;
+DROP POLICY IF EXISTS "deny_direct_social_likes" ON mm_social_likes;
+DROP POLICY IF EXISTS "deny_direct_social_comments" ON mm_social_comments;
+DROP POLICY IF EXISTS "deny_direct_social_shares" ON mm_social_shares;
+DROP POLICY IF EXISTS "deny_direct_daily_qr" ON mm_daily_qr;
 
 CREATE POLICY "deny_direct_users" ON users FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_absensi" ON absensi FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_sessions" ON mm_sessions FOR ALL USING (FALSE) WITH CHECK (FALSE);
+CREATE POLICY "deny_direct_grades" ON mm_attendance_grades FOR ALL USING (FALSE) WITH CHECK (FALSE);
+CREATE POLICY "deny_direct_typing" ON mm_typing_scores FOR ALL USING (FALSE) WITH CHECK (FALSE);
+CREATE POLICY "deny_direct_social_posts" ON mm_social_posts FOR ALL USING (FALSE) WITH CHECK (FALSE);
+CREATE POLICY "deny_direct_social_likes" ON mm_social_likes FOR ALL USING (FALSE) WITH CHECK (FALSE);
+CREATE POLICY "deny_direct_social_comments" ON mm_social_comments FOR ALL USING (FALSE) WITH CHECK (FALSE);
+CREATE POLICY "deny_direct_social_shares" ON mm_social_shares FOR ALL USING (FALSE) WITH CHECK (FALSE);
+CREATE POLICY "deny_direct_daily_qr" ON mm_daily_qr FOR ALL USING (FALSE) WITH CHECK (FALSE);
 
 REVOKE ALL ON users FROM anon, authenticated;
 REVOKE ALL ON absensi FROM anon, authenticated;
 REVOKE ALL ON mm_sessions FROM anon, authenticated;
+REVOKE ALL ON mm_attendance_grades FROM anon, authenticated;
+REVOKE ALL ON mm_typing_scores FROM anon, authenticated;
+REVOKE ALL ON mm_social_posts FROM anon, authenticated;
+REVOKE ALL ON mm_social_likes FROM anon, authenticated;
+REVOKE ALL ON mm_social_comments FROM anon, authenticated;
+REVOKE ALL ON mm_social_shares FROM anon, authenticated;
+REVOKE ALL ON mm_daily_qr FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_login(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_register(TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_me(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_public_counts() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_users(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_absensi(TEXT) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION mm_submit_absensi(TEXT, TEXT, TEXT, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_submit_absensi(TEXT, TEXT, TEXT, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_admin_add_absensi(TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_delete_absensi(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_update_user_role(TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_update_user_name(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_delete_user(TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_get_grades(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_set_grade(TEXT, TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_validate_absensi(TEXT, TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_submit_typing_score(TEXT, INTEGER, INTEGER, INTEGER, INTEGER) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_get_typing_leaderboard() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_get_social_feed(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_create_social_post(TEXT, TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_toggle_social_like(TEXT, UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_add_social_comment(TEXT, UUID, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_add_social_share(TEXT, UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_admin_set_daily_qr(TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_get_daily_qr(TEXT) TO anon, authenticated;

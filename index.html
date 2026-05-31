@@ -756,6 +756,10 @@ img {
   .sosmed-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .external-socials {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .sosmed-card {
@@ -795,6 +799,150 @@ img {
 .sosmed-info p {
   font-size: 0.72rem;
   color: var(--text-muted);
+}
+
+.social-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.social-compose,
+.social-post {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.social-compose textarea,
+.social-compose input,
+.social-comment-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fbfbfb;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.social-compose textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.social-post-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.social-post-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.social-post-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.social-post-meta {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.social-caption {
+  color: var(--text-main);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.social-media {
+  width: 100%;
+  max-height: 460px;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+  background: #f8fafc;
+}
+
+.social-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.social-action {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  background: rgba(8, 101, 228, 0.05);
+}
+
+.social-action.active {
+  color: var(--red);
+  background: var(--red-light);
+}
+
+.social-comments {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.social-comment {
+  background: rgba(8, 101, 228, 0.04);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.social-comment strong {
+  font-size: 0.76rem;
+}
+
+.social-comment p {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  margin-top: 3px;
+}
+
+.external-socials {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 /* ── ABSENSI SCREEN ── */
@@ -2840,11 +2988,13 @@ footer p {
     <section class="section">
       <div class="section-header">
         <div class="section-tag">Ikuti Kami</div>
-        <h2 class="section-title">Media Sosial</h2>
-        <p class="section-desc">Ikuti aktivitas kami di berbagai kanal resmi.</p>
+        <h2 class="section-title">MM Social</h2>
+        <p class="section-desc">Feed internal Multimedia: posting, komentar, like, dan share.</p>
       </div>
 
-      <div class="sosmed-grid">
+      <div id="socialContent"></div>
+
+      <div class="external-socials" style="margin-top:18px">
         <a href="https://instagram.com/mpai.multigen" target="_blank" class="sosmed-card">
           <div class="sosmed-icon" style="background: linear-gradient(135deg, #f09433, #dc2743, #bc1888);"><i class="fab fa-instagram"></i></div>
           <div class="sosmed-info">
@@ -3142,7 +3292,7 @@ async function addAbsensi(a){
   const isAdmin=String(a.addedBy||'').startsWith('admin:');
   const args=isAdmin
     ?{p_token:sess?.token||'',p_user_id:a.userId,p_date:a.date,p_status:a.status,p_note:meta.note||''}
-    :{p_token:sess?.token||'',p_status:a.status,p_note:meta.note||'',p_lat:a.location?.lat??null,p_lng:a.location?.lng??null,p_accuracy:a.location?.accuracy??null};
+    :{p_token:sess?.token||'',p_status:a.status,p_note:meta.note||'',p_lat:a.location?.lat??null,p_lng:a.location?.lng??null,p_accuracy:a.location?.accuracy??null,p_qr_code:a.qrCode||''};
   const {error}=await callRpc(isAdmin?'mm_admin_add_absensi':'mm_submit_absensi',args);
   return error;
 }
@@ -3157,6 +3307,74 @@ async function getPublicCounts(){
   const {data,error}=await callRpc('mm_public_counts');
   if(error)return{members:0,absensi:0};
   return data||{members:0,absensi:0};
+}
+
+async function getGrades(){
+  const sess=getSession();
+  const {data,error}=await callRpc('mm_get_grades',{p_token:sess?.token||''});
+  if(error)return{};
+  return data||{};
+}
+
+async function saveGrade(uid,grade){
+  const sess=getSession();
+  return await callRpc('mm_set_grade',{p_token:sess?.token||'',p_user_id:uid,p_grade:grade});
+}
+
+async function validateAbsensi(id,decision){
+  const sess=getSession();
+  return await callRpc('mm_validate_absensi',{p_token:sess?.token||'',p_absensi_id:id,p_decision:decision});
+}
+
+async function submitTypingScore(score){
+  const sess=getSession();
+  if(!sess?.token)return{error:{message:'Login diperlukan'}};
+  return await callRpc('mm_submit_typing_score',{p_token:sess.token,p_wpm:score.wpm,p_accuracy:score.accuracy,p_correct:score.correct,p_wrong:score.wrong});
+}
+
+async function loadTypingLeaderboard(){
+  const {data,error}=await callRpc('mm_get_typing_leaderboard');
+  if(error)return[];
+  return Array.isArray(data)?data:[];
+}
+
+async function getSocialFeed(){
+  const sess=getSession();
+  const {data,error}=await callRpc('mm_get_social_feed',{p_token:sess?.token||''});
+  if(error)return[];
+  return Array.isArray(data)?data:[];
+}
+
+async function createSocialPost(caption,mediaUrl){
+  const sess=getSession();
+  return await callRpc('mm_create_social_post',{p_token:sess?.token||'',p_caption:caption,p_media_url:mediaUrl||''});
+}
+
+async function toggleSocialLike(postId){
+  const sess=getSession();
+  return await callRpc('mm_toggle_social_like',{p_token:sess?.token||'',p_post_id:postId});
+}
+
+async function addSocialComment(postId,body){
+  const sess=getSession();
+  return await callRpc('mm_add_social_comment',{p_token:sess?.token||'',p_post_id:postId,p_body:body});
+}
+
+async function addSocialShare(postId){
+  const sess=getSession();
+  return await callRpc('mm_add_social_share',{p_token:sess?.token||'',p_post_id:postId});
+}
+
+async function setDailyQr(code=''){
+  const sess=getSession();
+  return await callRpc('mm_admin_set_daily_qr',{p_token:sess?.token||'',p_code:code});
+}
+
+async function getDailyQr(){
+  const sess=getSession();
+  const {data,error}=await callRpc('mm_get_daily_qr',{p_token:sess?.token||''});
+  if(error)return null;
+  return data;
 }
 
 async function initDB(){
@@ -3308,6 +3526,7 @@ function navigate(page){
   if(page==='absensi')renderAbsensi();
   if(page==='profile')renderProfile();
   if(page==='typing')renderTyping();
+  if(page==='sosmed')renderSocialFeed();
   if(page==='admin')renderAdmin();
   if(page==='beranda')updateHeroStats();
 }
@@ -3337,6 +3556,95 @@ function animNum(id,target){
 }
 
 /* ── ABSENSI SCREEN ── */
+/* MM SOCIAL FEED */
+async function renderSocialFeed(){
+  const el=document.getElementById('socialContent');
+  if(!el)return;
+  el.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-light)"><i class="fas fa-spinner fa-spin"></i><p style="margin-top:10px;font-size:0.8rem">Memuat MM Social...</p></div>`;
+  try{
+    const posts=await getSocialFeed();
+    const compose=currentUser?.role==='admin'?`
+      <div class="social-compose">
+        <textarea id="socialCaption" placeholder="Bagikan update kegiatan Multimedia..."></textarea>
+        <input id="socialMediaUrl" placeholder="URL gambar/video opsional">
+        <button class="btn-primary" onclick="submitSocialPost()"><i class="fa-solid fa-paper-plane"></i> Posting</button>
+      </div>`:'';
+    const feed=posts.length?posts.map(renderSocialPost).join(''):`<div class="social-post" style="text-align:center;color:var(--text-light);font-size:0.85rem">Belum ada posting MM Social.</div>`;
+    el.innerHTML=`<div class="social-layout">${compose}${feed}</div>`;
+  }catch(e){
+    el.innerHTML=`<div class="locked"><div class="locked-icon" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i></div><h3>Gagal Memuat Social</h3><p>Coba reload halaman.</p></div>`;
+  }
+}
+
+function renderSocialPost(p){
+  const comments=(p.comments||[]).slice(-4).map(c=>`
+    <div class="social-comment">
+      <strong>${esc(c.name)} <span style="color:var(--text-light);font-weight:700">@${esc(c.username)}</span></strong>
+      <p>${esc(c.body)}</p>
+    </div>`).join('');
+  const media=p.mediaUrl?`<img class="social-media" src="${esc(p.mediaUrl)}" alt="Posting MM" onerror="this.style.display='none'">`:'';
+  const logged=!!currentUser;
+  return `
+    <article class="social-post" id="post-${p.id}">
+      <div class="social-post-head">
+        <div class="social-post-avatar">${initialsOf(p.name)}</div>
+        <div>
+          <div class="social-post-name">${esc(p.name)}</div>
+          <div class="social-post-meta">@${esc(p.username)} - ${new Date(p.createdAt).toLocaleString('id-ID')}</div>
+        </div>
+      </div>
+      <div class="social-caption">${esc(p.caption)}</div>
+      ${media}
+      <div class="social-actions">
+        <button class="social-action ${p.liked?'active':''}" ${logged?'':'disabled'} onclick="likeSocialPost('${p.id}')"><i class="fa-solid fa-heart"></i> ${p.likes||0}</button>
+        <button class="social-action" ${logged?'':'disabled'} onclick="focusSocialComment('${p.id}')"><i class="fa-solid fa-comment"></i> ${(p.comments||[]).length}</button>
+        <button class="social-action" ${logged?'':'disabled'} onclick="shareSocialPost('${p.id}')"><i class="fa-solid fa-share"></i> ${p.shares||0}</button>
+      </div>
+      <div class="social-comments">${comments}</div>
+      ${logged?`<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px">
+        <input class="social-comment-input" id="comment-${p.id}" placeholder="Tulis komentar..." style="margin-bottom:0">
+        <button class="btn-ghost" onclick="submitSocialComment('${p.id}')">Kirim</button>
+      </div>`:`<p style="font-size:0.74rem;color:var(--text-muted);font-weight:700;margin-top:10px">Login untuk like, komentar, dan share.</p>`}
+    </article>`;
+}
+
+async function submitSocialPost(){
+  const caption=document.getElementById('socialCaption')?.value.trim();
+  const mediaUrl=document.getElementById('socialMediaUrl')?.value.trim();
+  if(!caption||caption.length<3){toast('Caption minimal 3 karakter.','error');return;}
+  const {error}=await createSocialPost(caption,mediaUrl);
+  if(error){toast(error.message||'Gagal posting.','error');return;}
+  toast('Posting MM Social terkirim.','success');
+  renderSocialFeed();
+}
+
+async function likeSocialPost(id){
+  const {error}=await toggleSocialLike(id);
+  if(error){toast(error.message||'Gagal like.','error');return;}
+  renderSocialFeed();
+}
+
+function focusSocialComment(id){
+  document.getElementById('comment-'+id)?.focus();
+}
+
+async function submitSocialComment(id){
+  const input=document.getElementById('comment-'+id);
+  const body=input?.value.trim();
+  if(!body||body.length<2){toast('Komentar terlalu pendek.','error');return;}
+  const {error}=await addSocialComment(id,body);
+  if(error){toast(error.message||'Gagal komentar.','error');return;}
+  renderSocialFeed();
+}
+
+async function shareSocialPost(id){
+  const {error}=await addSocialShare(id);
+  if(error){toast(error.message||'Gagal share.','error');return;}
+  try{await navigator.clipboard.writeText(location.href.split('#')[0]+'#post-'+id)}catch(e){}
+  toast('Share dicatat. Link halaman disiapkan.','success');
+  renderSocialFeed();
+}
+
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function fmtDate(s){const d=new Date(s+'T00:00:00');return d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
 function fmtTime(ts){return new Date(ts).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}
@@ -3393,19 +3701,17 @@ function getScoreClass(score){
   return String(score||'').trim()?'good':'';
 }
 
-function getManualGrades(){
-  try{return JSON.parse(localStorage.getItem('mm_manual_grades'))||{}}catch{return{}}
-}
+let manualGradesCache={};
 
-function saveManualGrades(grades){
-  localStorage.setItem('mm_manual_grades',JSON.stringify(grades));
-}
+function getManualGrades(){return manualGradesCache||{}}
+
+function saveManualGrades(grades){manualGradesCache=grades||{}}
 
 function manualGradeFor(uid){
   return getManualGrades()[uid]||'';
 }
 
-function setManualGrade(uid,value){
+async function setManualGrade(uid,value){
   const grades=getManualGrades();
   const clean=String(value||'').replace(/[^\w\s.,:+-]/g,'').slice(0,24);
   if(clean)grades[uid]=clean;
@@ -3416,6 +3722,8 @@ function setManualGrade(uid,value){
     badge.textContent=clean||'Belum dinilai';
     badge.className='score-pill '+getScoreClass(clean);
   }
+  const {error}=await saveGrade(uid,clean);
+  if(error)toast('Gagal menyimpan nilai ke Supabase.','error');
 }
 
 function buildAttendanceRecap(users,absensi){
@@ -3631,6 +3939,8 @@ async function renderAbsensi(){
         <div class="note-card">
           <label for="attendanceNote">Catatan absen</label>
           <textarea id="attendanceNote" placeholder="Wajib untuk Sakit/Izin. Untuk Hadir boleh dikosongkan, atau isi keterangan singkat bila perlu."></textarea>
+          <label for="attendanceQrCode" style="margin-top:12px">Kode QR harian (jika admin mengaktifkan)</label>
+          <input id="attendanceQrCode" class="ipt" placeholder="Scan/ketik kode QR harian untuk Hadir" style="width:100%">
         </div>`:''}
         <div class="location-card">
           <div class="location-card-head">
@@ -3685,6 +3995,7 @@ async function doAbsen(status){
     const absensi=await getAbsensi();
     if(absensi.find(a=>a.userId===currentUser.id&&a.date===today)){toast('Anda sudah absen hari ini!','info');return;}
     const note=(document.getElementById('attendanceNote')?.value||'').trim();
+    const qrCode=(document.getElementById('attendanceQrCode')?.value||'').trim();
     let loc=null;
     if(status==='hadir'){
       toast('Mengecek lokasi perangkat...','info');
@@ -3700,7 +4011,8 @@ async function doAbsen(status){
       userId:currentUser.id,username:currentUser.username,name:currentUser.name,
       date:today,timestamp:Date.now(),status:status,sessionId:sess.loginAt,
       addedBy:buildAttendanceMeta(status,note,loc),
-      location:loc
+      location:loc,
+      qrCode
     };
     const error=await addAbsensi(rec);
     if(error){toast('Gagal mencatat absensi: '+(error.message||'Error'),'error');return;}
@@ -3824,13 +4136,14 @@ async function saveProfileName(){
 /* 10FASTFINGER DESKTOP TEST */
 const TYPING_WORD_BANK='multimedia desain kamera editing konten video audio naskah poster sosial media kreatif sekolah al ishlah produksi visual foto render animasi tipografi warna layout publikasi dokumentasi keyboard cepat akurat karya tim proyek studio berita caption thumbnail presentasi komunikasi literasi digital komputer aplikasi jaringan'.split(' ');
 let typingState=null;
+let typingScoresCache=[];
 
 function getTypingScores(){
-  try{return JSON.parse(localStorage.getItem('mm_typing_scores'))||[]}catch{return[]}
+  return typingScoresCache||[];
 }
 
 function saveTypingScores(scores){
-  localStorage.setItem('mm_typing_scores',JSON.stringify(scores.slice(0,10)));
+  typingScoresCache=scores.slice(0,10);
 }
 
 function makeTypingWords(){
@@ -3860,6 +4173,11 @@ function renderTyping(){
     return;
   }
   if(!typingState)typingState={words:makeTypingWords(),index:0,correct:0,wrong:0,start:null,left:60,finished:false};
+  loadTypingLeaderboard().then(scores=>{
+    saveTypingScores(scores);
+    const lb=document.getElementById('typingLeaderboard');
+    if(lb)lb.innerHTML=renderTypingLeaderboard();
+  });
   el.innerHTML=`
     <div class="typing-layout typing-desktop-only">
       <div class="typing-card">
@@ -3953,6 +4271,7 @@ function finishTypingTest(){
   typingState.finished=true;
   clearInterval(window._typingTick);
   const score={name:currentUser?.name||'Anggota',username:currentUser?.username||'guest',wpm:calcTypingWpm(),accuracy:calcTypingAccuracy(),correct:typingState.correct,wrong:typingState.wrong,at:Date.now()};
+  submitTypingScore(score).then(({error})=>{if(error)toast('Skor lokal tersimpan, tapi gagal sync leaderboard.','error');});
   const scores=[score,...getTypingScores()].sort((a,b)=>b.wpm-a.wpm||b.accuracy-a.accuracy).slice(0,10);
   saveTypingScores(scores);
   const input=document.getElementById('typingInput');
@@ -3997,7 +4316,8 @@ async function renderAdmin(){
   }
   el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem"></i><p style="margin-top:12px;font-size:0.8rem">Memuat Panel Kontrol Admin...</p></div>`;
   try{
-    const [users,absensi]=await Promise.all([getUsers(),getAbsensi()]);
+    const [users,absensi,grades]=await Promise.all([getUsers(),getAbsensi(),getGrades()]);
+    saveManualGrades(grades);
     const total=users.length;
     const anggota=users.filter(x=>x.role==='anggota').length;
     const totalAbsen=absensi.length;
@@ -4106,7 +4426,13 @@ function renderAbsenTable(absensi,users){
         <td>${fmtTime(a.timestamp)}</td>
         <td><span class="sb sb-${a.status}">${STATUS_LABELS[a.status]||a.status}</span></td>
         <td>${meta.location?`<span style="font-size:0.7rem;color:var(--text-muted);font-weight:700">${esc(meta.location)}</span>`:'<span style="font-size:0.7rem;color:var(--text-light)">Tidak wajib</span>'}</td>
-        <td><span style="font-size:0.7rem;color:var(--text-muted);font-weight:700">${esc(meta.note||meta.validation||'Admin/manual')}</span></td>
+        <td>
+          <span style="font-size:0.7rem;color:var(--text-muted);font-weight:700">${esc(meta.note||meta.validation||'Admin/manual')}</span>
+          ${(a.status==='izin'||a.status==='sakit')?`<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            <button class="action-btn" title="Terima" onclick="setAbsensiValidation('${a.id}','diterima')"><i class="fa-solid fa-check"></i></button>
+            <button class="action-btn danger" title="Tolak" onclick="setAbsensiValidation('${a.id}','ditolak')"><i class="fa-solid fa-xmark"></i></button>
+          </div>`:''}
+        </td>
         <td><button class="action-btn danger" onclick="deleteAbsen('${a.id}')"><i class="fa-solid fa-trash"></i></button></td>
       </tr>`;
     }).join('');
@@ -4114,6 +4440,20 @@ function renderAbsenTable(absensi,users){
   const memberOpts=users.filter(u=>u.role==='anggota'||u.role==='admin').map(u=>`<option value="${u.id}">${u.name} (@${u.username})</option>`).join('');
 
   return `
+  <div class="alfa-form">
+    <h4><i class="fa-solid fa-qrcode text-primary"></i> Kode QR Harian Hadir</h4>
+    <div class="alfa-row">
+      <div class="alfa-field">
+        <label>Kode QR / Token Hari Ini</label>
+        <input type="text" id="dailyQrCode" placeholder="Kosongkan untuk generate otomatis">
+      </div>
+      <button class="btn-primary" style="height:42px; border-radius: 12px; font-weight:700;" onclick="generateDailyQr()"><i class="fa-solid fa-qrcode"></i> Buat QR</button>
+      <button class="btn-ghost" style="height:42px; border-radius: 12px; font-weight:700;" onclick="showDailyQr()"><i class="fa-solid fa-eye"></i> Lihat</button>
+    </div>
+    <p style="color:var(--text-muted);font-size:0.76rem;font-weight:700;margin-top:10px">Jika kode hari ini aktif, siswa harus memasukkan kode hasil scan QR selain lolos GPS.</p>
+    <div id="dailyQrResult" class="location-result"></div>
+  </div>
+
   <div class="alfa-form">
     <h4><i class="fa-solid fa-user-slash text-red"></i> Catat Absen Ketidakhadiran (Admin)</h4>
     <div class="alfa-row">
@@ -4242,7 +4582,8 @@ function renderAdminRecap(users,absensi){
 
 async function showAdminProfileDetail(uid){
   try{
-    const [users,absensi]=await Promise.all([getUsers(),getAbsensi()]);
+    const [users,absensi,grades]=await Promise.all([getUsers(),getAbsensi(),getGrades()]);
+    saveManualGrades(grades);
     const user=users.find(u=>u.id===uid);
     if(!user){toast('Profile tidak ditemukan.','error');return;}
     const recap=buildAttendanceRecap([user],absensi)[0];
@@ -4401,7 +4742,8 @@ async function addAlfaByAdmin(){
   const status=document.getElementById('alfaStatus')?.value;
   if(!uid||!date){toast('Lengkapi semua field!','error');return;}
   try{
-    const [users,absensi]=await Promise.all([getUsers(),getAbsensi()]);
+    const [users,absensi,grades]=await Promise.all([getUsers(),getAbsensi(),getGrades()]);
+    saveManualGrades(grades);
     const user=users.find(u=>u.id===uid);
     if(!user){toast('Pengguna tidak ditemukan!','error');return;}
     if(absensi.find(a=>a.userId===uid&&a.date===date)){
@@ -4428,6 +4770,40 @@ function deleteAbsen(id){
       toast('Catatan absensi terhapus!','success');renderAdmin();
     }catch(e){toast('Gagal menghubungkan ke database!','error');}
   });
+}
+
+async function setAbsensiValidation(id,decision){
+  try{
+    const {error}=await validateAbsensi(id,decision);
+    if(error){toast(error.message||'Gagal validasi catatan.','error');return;}
+    toast(`Catatan ${decision} oleh admin.`,'success');
+    renderAdmin();
+  }catch(e){toast('Gagal terhubung ke backend.','error');}
+}
+
+async function generateDailyQr(){
+  const code=document.getElementById('dailyQrCode')?.value.trim()||'';
+  const {data,error}=await setDailyQr(code);
+  const box=document.getElementById('dailyQrResult');
+  if(error){toast(error.message||'Gagal membuat QR.','error');return;}
+  if(box){
+    box.className='location-result show ok';
+    box.innerHTML=`<i class="fa-solid fa-qrcode"></i> Kode hari ini: <strong>${esc(data.code)}</strong>. Buat QR dari teks ini dan tempel di sekolah.`;
+  }
+  toast('Kode QR harian aktif.','success');
+}
+
+async function showDailyQr(){
+  const data=await getDailyQr();
+  const box=document.getElementById('dailyQrResult');
+  if(!box)return;
+  if(!data||!data.code){
+    box.className='location-result show warn';
+    box.innerHTML='Belum ada kode QR aktif hari ini.';
+    return;
+  }
+  box.className='location-result show ok';
+  box.innerHTML=`<i class="fa-solid fa-qrcode"></i> Kode aktif ${esc(data.date)}: <strong>${esc(data.code)}</strong>`;
 }
 
 function filterTbl(tableId,q){

@@ -18,6 +18,11 @@ Website ini adalah aplikasi landing page dan dashboard untuk Eskul Multimedia MT
 - Halaman `Absensi Digital` untuk mencatat kehadiran.
 - Panel `Admin` untuk mengelola pengguna dan absensi dari backend.
 - Tab admin `Rekap & Profile` untuk melihat semua profile, rekap Hadir/Izin/Sakit/Alfa, nilai kehadiran, dan export Excel.
+- Nilai manual admin tersimpan di Supabase melalui tabel `mm_attendance_grades`.
+- Validasi izin/sakit oleh admin melalui tombol terima/tolak.
+- Leaderboard 10FastFinger tersimpan di Supabase.
+- `MM Social` menyimpan posting, like, komentar, dan share di Supabase.
+- Fondasi QR harian: admin membuat kode QR harian, lalu absen `Hadir` bisa mewajibkan GPS + kode QR.
 - Modal `Masuk` dan `Daftar` untuk autentikasi pengguna.
 
 ## Struktur Proyek
