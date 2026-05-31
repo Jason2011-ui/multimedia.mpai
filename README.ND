@@ -53,6 +53,7 @@ Agar data masuk otomatis, Spreadsheet membutuhkan Google Apps Script Web App.
 File google_sheets_apps_script.js sudah disiapkan di repo.
 Setelah Apps Script di-deploy, URL Web App dimasukkan ke konstanta GOOGLE_SHEET_WEBHOOK_URL di index.html.
 Pada versi terbaru, admin juga dapat menyimpan URL Web App dari halaman Admin bagian Absensi. URL ini tersimpan di Supabase dan dipakai semua siswa saat absen.
+Script Spreadsheet terbaru menulis data ke sheet/tab pertama, misalnya Sheet1, agar data langsung terlihat di tabel utama yang dibuka.
 
 Link Spreadsheet:
 https://docs.google.com/spreadsheets/d/1hdEFMTRURThsg8SosbPIEFP8vUeZ9_0TOrm747RztSA/edit?usp=sharing

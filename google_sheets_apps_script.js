@@ -1,5 +1,4 @@
 const SPREADSHEET_ID = '1hdEFMTRURThsg8SosbPIEFP8vUeZ9_0TOrm747RztSA';
-const SHEET_NAME = 'Absensi Digital';
 
 function doGet() {
   return ContentService
@@ -10,7 +9,7 @@ function doGet() {
 function doPost(e) {
   const payload = JSON.parse((e && e.postData && e.postData.contents) || '{}');
   const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheet = spreadsheet.getSheetByName(SHEET_NAME) || spreadsheet.insertSheet(SHEET_NAME);
+  const sheet = spreadsheet.getSheets()[0];
 
   if (sheet.getLastRow() === 0) {
     sheet.appendRow([

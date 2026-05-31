@@ -1586,6 +1586,15 @@ img {
   gap: 18px;
 }
 
+.profile-card.featured {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, rgba(16,185,129,0.16), transparent 34%),
+    linear-gradient(135deg, rgba(8,101,228,0.12), rgba(16,185,129,0.08)),
+    #fff;
+}
+
 .profile-hero {
   display: flex;
   align-items: center;
@@ -1593,18 +1602,20 @@ img {
 }
 
 .profile-avatar {
-  width: 62px;
-  height: 62px;
-  border-radius: 18px;
+  width: 84px;
+  height: 84px;
+  border-radius: 26px;
   background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 1.08rem;
   flex-shrink: 0;
   overflow: hidden;
+  box-shadow: 0 14px 28px rgba(8,101,228,0.18);
+  border: 3px solid rgba(255,255,255,0.9);
 }
 
 .profile-avatar img {
@@ -1614,7 +1625,7 @@ img {
 }
 
 .profile-hero h3 {
-  font-size: 1.15rem;
+  font-size: 1.28rem;
   font-weight: 800;
 }
 
@@ -1623,6 +1634,7 @@ img {
   font-size: 0.8rem;
   font-weight: 700;
   margin-top: 3px;
+  line-height: 1.5;
 }
 
 .profile-form-row {
@@ -1633,9 +1645,71 @@ img {
   margin-top: 18px;
 }
 
+.profile-custom-layout {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.profile-preview-frame {
+  width: 116px;
+  aspect-ratio: 1;
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(8,101,228,0.13), rgba(16,185,129,0.13)),
+    #fff;
+  border: 1px solid rgba(8,101,228,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--primary);
+  font-size: 1.5rem;
+  font-weight: 900;
+  box-shadow: 0 14px 30px rgba(15,23,42,0.08);
+}
+
+.profile-preview-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-help {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+.profile-custom-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.profile-custom-title h3 {
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.profile-custom-title span {
+  border-radius: 999px;
+  background: rgba(16,185,129,0.12);
+  color: #047857;
+  padding: 7px 10px;
+  font-size: 0.68rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
 .profile-gallery-picks {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
   gap: 8px;
   margin-top: 10px;
 }
@@ -1647,10 +1721,14 @@ img {
   background: #f8fafc;
   overflow: hidden;
   cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8);
+  transition: var(--transition);
 }
 
 .profile-gallery-pick.active {
   border-color: var(--primary);
+  box-shadow: 0 8px 18px rgba(8,101,228,0.18);
+  transform: translateY(-2px);
 }
 
 .profile-gallery-pick img {
@@ -2886,6 +2964,19 @@ tr:last-child td {
   .typing-layout,
   .profile-form-row {
     grid-template-columns: 1fr;
+  }
+
+  .profile-custom-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-preview-frame {
+    width: 104px;
+  }
+
+  .profile-custom-title {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .recap-grid,
@@ -4724,6 +4815,7 @@ function chooseProfileGalleryAvatar(index){
   if(!item)return;
   const input=document.getElementById('profileAvatarUrl');
   if(input)input.value=item.mediaUrl;
+  setProfilePreview(item.mediaUrl);
   document.querySelectorAll('.profile-gallery-pick').forEach((b,i)=>b.classList.toggle('active',i===index));
 }
 
@@ -4736,6 +4828,28 @@ function readProfileAvatarFile(){
     reader.onerror=()=>reject(reader.error||new Error('Gagal membaca file'));
     reader.readAsDataURL(file);
   });
+}
+
+function setProfilePreview(avatarUrl=''){
+  const frame=document.getElementById('profilePreviewFrame');
+  if(!frame||!currentUser)return;
+  const clean=String(avatarUrl||'').trim();
+  frame.innerHTML=clean
+    ?`<img src="${esc(clean)}" alt="Preview profile" onerror="this.remove();this.parentElement.textContent='${initialsOf(currentUser.name)}'">`
+    :initialsOf(currentUser.name);
+}
+
+function updateProfilePreviewFromInput(){
+  setProfilePreview(document.getElementById('profileAvatarUrl')?.value||'');
+}
+
+async function previewProfileAvatarFile(){
+  try{
+    const fileData=await readProfileAvatarFile();
+    if(fileData)setProfilePreview(fileData);
+  }catch(e){
+    toast('Gagal membaca preview foto/GIF.','error');
+  }
 }
 
 async function renderProfile(){
@@ -4783,7 +4897,7 @@ async function renderProfile(){
 
     el.innerHTML=`
       <div class="profile-grid">
-        <div class="profile-card">
+        <div class="profile-card featured">
           <div class="profile-hero">
             ${renderProfileAvatar(currentUser.name,custom.avatarUrl)}
             <div>
@@ -4801,20 +4915,31 @@ async function renderProfile(){
           </div>
         </div>
         <div class="profile-card">
-          <h3 style="font-size:1rem;font-weight:800;margin-bottom:14px">Custom Profile</h3>
-          <div class="profile-field">
-            <label for="profileAvatarUrl">URL foto/GIF profile</label>
-            <input id="profileAvatarUrl" value="${esc(custom.avatarUrl||'')}" placeholder="Tempel URL gambar/GIF atau pilih dari Galery">
+          <div class="profile-custom-title">
+            <h3>Custom Profile</h3>
+            <span>Foto, GIF, atau karya</span>
           </div>
-          <div class="profile-field" style="margin-top:12px">
-            <label for="profileAvatarFile">Upload foto/GIF</label>
-            <input id="profileAvatarFile" type="file" accept="image/*,.gif">
+          <div class="profile-custom-layout">
+            <div class="profile-preview-frame" id="profilePreviewFrame">
+              ${custom.avatarUrl?`<img src="${esc(custom.avatarUrl)}" alt="Preview profile" onerror="this.remove();this.parentElement.textContent='${initialsOf(currentUser.name)}'">`:initialsOf(currentUser.name)}
+            </div>
+            <div>
+              <div class="profile-field">
+                <label for="profileAvatarUrl">URL foto/GIF profile</label>
+                <input id="profileAvatarUrl" value="${esc(custom.avatarUrl||'')}" placeholder="Tempel URL gambar/GIF atau pilih dari Galery" oninput="updateProfilePreviewFromInput()">
+              </div>
+              <div class="profile-field" style="margin-top:12px">
+                <label for="profileAvatarFile">Upload foto/GIF</label>
+                <input id="profileAvatarFile" type="file" accept="image/*,.gif" onchange="previewProfileAvatarFile()">
+              </div>
+              <div class="profile-field" style="margin-top:12px">
+                <label for="profileBio">Catatan profile</label>
+                <input id="profileBio" value="${esc(custom.bio||'')}" maxlength="140" placeholder="Contoh: Editor video, desain, dokumentasi">
+              </div>
+              <p class="profile-help">Profile ini ikut muncul di Galery dan bisa dilihat saat user lain membuka profile kamu.</p>
+            </div>
           </div>
-          <div class="profile-field" style="margin-top:12px">
-            <label for="profileBio">Catatan profile</label>
-            <input id="profileBio" value="${esc(custom.bio||'')}" maxlength="140" placeholder="Contoh: Editor video, desain, dokumentasi">
-          </div>
-          <div style="margin-top:12px">
+          <div style="margin-top:16px">
             <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Pilih dari Galery</label>
             <div class="profile-gallery-picks">${galleryPicks}</div>
           </div>
