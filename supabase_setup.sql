@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS absensi (
 );
 
 CREATE TABLE IF NOT EXISTS mm_sessions (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id          UUID PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   token_hash  TEXT UNIQUE NOT NULL,
   user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at  TIMESTAMPTZ DEFAULT NOW(),
@@ -60,7 +60,7 @@ RETURNS TEXT
 LANGUAGE SQL
 IMMUTABLE
 AS $$
-  SELECT encode(digest(COALESCE(p_token, ''), 'sha256'), 'hex');
+  SELECT encode(extensions.digest(COALESCE(p_token, ''), 'sha256'), 'hex');
 $$;
 
 CREATE OR REPLACE FUNCTION mm_distance_m(lat1 DOUBLE PRECISION, lng1 DOUBLE PRECISION, lat2 DOUBLE PRECISION, lng2 DOUBLE PRECISION)
@@ -140,7 +140,7 @@ BEGIN
     RAISE EXCEPTION 'Username atau password salah';
   END IF;
 
-  v_token := encode(gen_random_bytes(32), 'hex');
+  v_token := encode(extensions.gen_random_bytes(32), 'hex');
 
   INSERT INTO mm_sessions (token_hash, user_id)
   VALUES (mm_token_hash(v_token), v_user.id);
@@ -172,7 +172,7 @@ BEGIN
 
   INSERT INTO users (id, username, name, password, role)
   VALUES (
-    'u' || replace(gen_random_uuid()::TEXT, '-', ''),
+    'u' || replace(extensions.gen_random_uuid()::TEXT, '-', ''),
     LOWER(TRIM(p_username)),
     TRIM(p_name),
     p_password_hash,
@@ -283,7 +283,7 @@ DECLARE
   v_now_ms BIGINT := floor(extract(epoch FROM NOW()) * 1000)::BIGINT;
   v_distance DOUBLE PRECISION;
   v_added_by TEXT;
-  v_id TEXT := 'ab' || replace(gen_random_uuid()::TEXT, '-', '');
+  v_id TEXT := 'ab' || replace(extensions.gen_random_uuid()::TEXT, '-', '');
 BEGIN
   v_user := mm_current_user(p_token);
 
@@ -344,7 +344,7 @@ AS $$
 DECLARE
   v_admin users;
   v_target users;
-  v_id TEXT := 'ab' || replace(gen_random_uuid()::TEXT, '-', '');
+  v_id TEXT := 'ab' || replace(extensions.gen_random_uuid()::TEXT, '-', '');
   v_ts BIGINT;
 BEGIN
   v_admin := mm_current_user(p_token);
