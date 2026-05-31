@@ -478,7 +478,6 @@ SET search_path = public
 AS $$
 DECLARE
   v_admin users;
-  v_old_role TEXT;
 BEGIN
   v_admin := mm_current_user(p_token);
   IF v_admin.role <> 'admin' THEN
@@ -498,7 +497,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_admin users;
-  v_post mm_social_posts;
+  v_old_role TEXT;
 BEGIN
   v_admin := mm_current_user(p_token);
   IF v_admin.role <> 'admin' THEN
@@ -776,6 +775,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_admin users;
+  v_post mm_social_posts;
 BEGIN
   v_admin := mm_current_user(p_token);
   IF v_admin.role <> 'admin' THEN
