@@ -119,6 +119,13 @@ CREATE TABLE IF NOT EXISTS mm_app_settings (
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS mm_profile_custom (
+  user_id    TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  avatar_url TEXT DEFAULT '',
+  bio        TEXT DEFAULT '',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 DELETE FROM absensi a
 USING absensi b
 WHERE a.ctid < b.ctid
@@ -533,6 +540,50 @@ BEGIN
 
   UPDATE users SET name = TRIM(p_name) WHERE id = v_user.id;
   RETURN jsonb_build_object('ok', TRUE, 'name', TRIM(p_name));
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_get_profile_custom(p_token TEXT)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user users;
+  v_row mm_profile_custom;
+BEGIN
+  v_user := mm_current_user(p_token);
+  SELECT * INTO v_row FROM mm_profile_custom WHERE user_id = v_user.id;
+  RETURN jsonb_build_object(
+    'avatarUrl', COALESCE(v_row.avatar_url, ''),
+    'bio', COALESCE(v_row.bio, '')
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION mm_update_profile_custom(p_token TEXT, p_avatar_url TEXT DEFAULT '', p_bio TEXT DEFAULT '')
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user users;
+  v_avatar TEXT := TRIM(COALESCE(p_avatar_url, ''));
+  v_bio TEXT := left(TRIM(COALESCE(p_bio, '')), 140);
+BEGIN
+  v_user := mm_current_user(p_token);
+  IF LENGTH(v_avatar) > 2500000 THEN
+    RAISE EXCEPTION 'Ukuran foto/GIF profile terlalu besar';
+  END IF;
+
+  INSERT INTO mm_profile_custom (user_id, avatar_url, bio, updated_at)
+  VALUES (v_user.id, v_avatar, v_bio, NOW())
+  ON CONFLICT (user_id) DO UPDATE
+  SET avatar_url = EXCLUDED.avatar_url, bio = EXCLUDED.bio, updated_at = NOW();
+
+  RETURN jsonb_build_object('ok', TRUE, 'avatarUrl', v_avatar, 'bio', v_bio);
 END;
 $$;
 
@@ -1006,6 +1057,7 @@ ALTER TABLE mm_social_shares ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_daily_qr ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_app_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_admin_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mm_profile_custom ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "allow_all_users" ON users;
 DROP POLICY IF EXISTS "allow_all_absensi" ON absensi;
@@ -1021,6 +1073,7 @@ DROP POLICY IF EXISTS "deny_direct_social_shares" ON mm_social_shares;
 DROP POLICY IF EXISTS "deny_direct_daily_qr" ON mm_daily_qr;
 DROP POLICY IF EXISTS "deny_direct_app_settings" ON mm_app_settings;
 DROP POLICY IF EXISTS "deny_direct_admin_audit_logs" ON mm_admin_audit_logs;
+DROP POLICY IF EXISTS "deny_direct_profile_custom" ON mm_profile_custom;
 
 CREATE POLICY "deny_direct_users" ON users FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_absensi" ON absensi FOR ALL USING (FALSE) WITH CHECK (FALSE);
@@ -1034,6 +1087,7 @@ CREATE POLICY "deny_direct_social_shares" ON mm_social_shares FOR ALL USING (FAL
 CREATE POLICY "deny_direct_daily_qr" ON mm_daily_qr FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_app_settings" ON mm_app_settings FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_admin_audit_logs" ON mm_admin_audit_logs FOR ALL USING (FALSE) WITH CHECK (FALSE);
+CREATE POLICY "deny_direct_profile_custom" ON mm_profile_custom FOR ALL USING (FALSE) WITH CHECK (FALSE);
 
 REVOKE ALL ON users FROM anon, authenticated;
 REVOKE ALL ON absensi FROM anon, authenticated;
@@ -1047,6 +1101,7 @@ REVOKE ALL ON mm_social_shares FROM anon, authenticated;
 REVOKE ALL ON mm_daily_qr FROM anon, authenticated;
 REVOKE ALL ON mm_app_settings FROM anon, authenticated;
 REVOKE ALL ON mm_admin_audit_logs FROM anon, authenticated;
+REVOKE ALL ON mm_profile_custom FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_login(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_register(TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_me(TEXT) TO anon, authenticated;
@@ -1058,6 +1113,8 @@ GRANT EXECUTE ON FUNCTION mm_admin_add_absensi(TEXT, TEXT, TEXT, TEXT, TEXT) TO 
 GRANT EXECUTE ON FUNCTION mm_delete_absensi(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_update_user_role(TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_update_user_name(TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_get_profile_custom(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_update_profile_custom(TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_delete_user(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_grades(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_set_grade(TEXT, TEXT, TEXT) TO anon, authenticated;

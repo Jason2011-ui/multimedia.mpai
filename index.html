@@ -1595,6 +1595,13 @@ img {
   font-weight: 800;
   font-size: 1rem;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .profile-hero h3 {
@@ -1615,6 +1622,32 @@ img {
   gap: 10px;
   align-items: end;
   margin-top: 18px;
+}
+
+.profile-gallery-picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.profile-gallery-pick {
+  aspect-ratio: 1;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  background: #f8fafc;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.profile-gallery-pick.active {
+  border-color: var(--primary);
+}
+
+.profile-gallery-pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .recap-grid,
@@ -3598,6 +3631,18 @@ async function updateUserName(uid,newName){
   return error;
 }
 
+async function getProfileCustom(){
+  const sess=getSession();
+  const {data,error}=await callRpc('mm_get_profile_custom',{p_token:sess?.token||''});
+  if(error)return{avatarUrl:'',bio:''};
+  return data||{avatarUrl:'',bio:''};
+}
+
+async function saveProfileCustom(avatarUrl,bio=''){
+  const sess=getSession();
+  return await callRpc('mm_update_profile_custom',{p_token:sess?.token||'',p_avatar_url:avatarUrl||'',p_bio:bio||''});
+}
+
 async function deleteUserById(uid){
   const sess=getSession();
   const {error}=await callRpc('mm_delete_user',{p_token:sess?.token||'',p_user_id:uid});
@@ -4601,6 +4646,38 @@ function initialsOf(name){
   return String(name||'MM').split(' ').filter(Boolean).map(x=>x[0]).join('').toUpperCase().slice(0,2)||'MM';
 }
 
+let profileGalleryAvatarOptions=[];
+
+function renderProfileAvatar(name,avatarUrl=''){
+  return avatarUrl
+    ?`<div class="profile-avatar"><img src="${esc(avatarUrl)}" alt="Foto profile" onerror="this.remove();this.parentElement.textContent='${initialsOf(name)}'"></div>`
+    :`<div class="profile-avatar">${initialsOf(name)}</div>`;
+}
+
+function isProfileImageMedia(url){
+  const clean=String(url||'');
+  return /^data:image\//i.test(clean)||/\.(png|jpe?g|gif|webp|avif|svg)(\?|#|$)/i.test(clean);
+}
+
+function chooseProfileGalleryAvatar(index){
+  const item=profileGalleryAvatarOptions[index];
+  if(!item)return;
+  const input=document.getElementById('profileAvatarUrl');
+  if(input)input.value=item.mediaUrl;
+  document.querySelectorAll('.profile-gallery-pick').forEach((b,i)=>b.classList.toggle('active',i===index));
+}
+
+function readProfileAvatarFile(){
+  const file=document.getElementById('profileAvatarFile')?.files?.[0];
+  if(!file)return Promise.resolve('');
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||''));
+    reader.onerror=()=>reject(reader.error||new Error('Gagal membaca file'));
+    reader.readAsDataURL(file);
+  });
+}
+
 async function renderProfile(){
   const el=document.getElementById('profileContent');
   if(!currentUser){
@@ -4615,7 +4692,12 @@ async function renderProfile(){
 
   el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem"></i><p style="margin-top:12px;font-size:0.8rem">Memuat profile...</p></div>`;
   try{
-    const absensi=await getAbsensi();
+    const [absensi,custom,feed]=await Promise.all([getAbsensi(),getProfileCustom(),getSocialFeed()]);
+    profileGalleryAvatarOptions=feed.filter(p=>isProfileImageMedia(p.mediaUrl)).slice(0,12);
+    const galleryPicks=profileGalleryAvatarOptions.length?profileGalleryAvatarOptions.map((p,i)=>`
+      <button class="profile-gallery-pick ${custom.avatarUrl===p.mediaUrl?'active':''}" onclick="chooseProfileGalleryAvatar(${i})" title="${esc(p.caption||'Galery MM')}">
+        <img src="${esc(p.mediaUrl)}" alt="Pilihan foto Galery">
+      </button>`).join(''):`<p style="color:var(--text-light);font-size:0.78rem;font-weight:700">Belum ada foto/GIF dari Galery yang bisa dipilih.</p>`;
     const mine=absensi.filter(a=>a.userId===currentUser.id).sort((a,b)=>b.timestamp-a.timestamp);
     const count=status=>mine.filter(a=>a.status===status).length;
     const log=mine.length===0
@@ -4643,10 +4725,11 @@ async function renderProfile(){
       <div class="profile-grid">
         <div class="profile-card">
           <div class="profile-hero">
-            <div class="profile-avatar">${initialsOf(currentUser.name)}</div>
+            ${renderProfileAvatar(currentUser.name,custom.avatarUrl)}
             <div>
               <h3>${esc(currentUser.name)}</h3>
               <p>@${esc(currentUser.username)} - ${esc(currentUser.role)}</p>
+              ${custom.bio?`<p>${esc(custom.bio)}</p>`:''}
             </div>
           </div>
           <div class="profile-form-row">
@@ -4656,6 +4739,26 @@ async function renderProfile(){
             </div>
             <button class="btn-primary" style="height:42px;border-radius:12px;font-weight:800" onclick="saveProfileName()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
           </div>
+        </div>
+        <div class="profile-card">
+          <h3 style="font-size:1rem;font-weight:800;margin-bottom:14px">Custom Profile</h3>
+          <div class="profile-field">
+            <label for="profileAvatarUrl">URL foto/GIF profile</label>
+            <input id="profileAvatarUrl" value="${esc(custom.avatarUrl||'')}" placeholder="Tempel URL gambar/GIF atau pilih dari Galery">
+          </div>
+          <div class="profile-field" style="margin-top:12px">
+            <label for="profileAvatarFile">Upload foto/GIF</label>
+            <input id="profileAvatarFile" type="file" accept="image/*,.gif">
+          </div>
+          <div class="profile-field" style="margin-top:12px">
+            <label for="profileBio">Catatan profile</label>
+            <input id="profileBio" value="${esc(custom.bio||'')}" maxlength="140" placeholder="Contoh: Editor video, desain, dokumentasi">
+          </div>
+          <div style="margin-top:12px">
+            <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Pilih dari Galery</label>
+            <div class="profile-gallery-picks">${galleryPicks}</div>
+          </div>
+          <button class="btn-primary" style="height:42px;border-radius:12px;font-weight:800;margin-top:14px" onclick="saveProfileCustomForm()"><i class="fa-solid fa-image"></i> Simpan Profile</button>
         </div>
         <div class="profile-card">
           <h3 style="font-size:1rem;font-weight:800;margin-bottom:14px">Rekap Kehadiran</h3>
@@ -4692,6 +4795,25 @@ async function saveProfileName(){
     toast('Nama profile diperbarui.','success');
     renderProfile();
   }catch(e){toast('Gagal terhubung ke database.','error');}
+}
+
+async function saveProfileCustomForm(){
+  let avatarUrl=(document.getElementById('profileAvatarUrl')?.value||'').trim();
+  const bio=(document.getElementById('profileBio')?.value||'').trim();
+  try{
+    const fileData=await readProfileAvatarFile();
+    if(fileData)avatarUrl=fileData;
+    if(avatarUrl&&!isProfileImageMedia(avatarUrl)){
+      toast('Gunakan URL gambar atau GIF yang valid.','error');
+      return;
+    }
+    const {error}=await saveProfileCustom(avatarUrl,bio);
+    if(error){toast(error.message||'Gagal menyimpan custom profile.','error');return;}
+    toast('Custom profile diperbarui.','success');
+    renderProfile();
+  }catch(e){
+    toast('Gagal membaca/menyimpan foto profile.','error');
+  }
 }
 
 /* 10FASTFINGER DESKTOP TEST */
