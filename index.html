@@ -3345,7 +3345,6 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 const STATUS_LABELS={hadir:'Hadir',sakit:'Sakit',izin:'Izin',alfa:'Alfa'};
 const STATUS_ICONS={hadir:'fa-circle-check',sakit:'fa-face-frown',izin:'fa-file-signature',alfa:'fa-circle-xmark'};
 const APP_START_DATE='2026-05-31';
-const ATTENDANCE_SCORE={hadir:100,izin:80,sakit:80,alfa:0};
 const SCHOOL_LOCATION={
   name:'MTs Plus Al Ishlah Ciganitri',
   address:'Jl. Ciganitri Tengah No.66, Cipagalo, Bojongsoang, Kabupaten Bandung',
@@ -3391,9 +3390,32 @@ function daysInclusive(start,end){
 }
 
 function getScoreClass(score){
-  if(score>=85)return'good';
-  if(score>=65)return'warn';
-  return'bad';
+  return String(score||'').trim()?'good':'';
+}
+
+function getManualGrades(){
+  try{return JSON.parse(localStorage.getItem('mm_manual_grades'))||{}}catch{return{}}
+}
+
+function saveManualGrades(grades){
+  localStorage.setItem('mm_manual_grades',JSON.stringify(grades));
+}
+
+function manualGradeFor(uid){
+  return getManualGrades()[uid]||'';
+}
+
+function setManualGrade(uid,value){
+  const grades=getManualGrades();
+  const clean=String(value||'').replace(/[^\w\s.,:+-]/g,'').slice(0,24);
+  if(clean)grades[uid]=clean;
+  else delete grades[uid];
+  saveManualGrades(grades);
+  const badge=document.getElementById('gradeBadge-'+uid);
+  if(badge){
+    badge.textContent=clean||'Belum dinilai';
+    badge.className='score-pill '+getScoreClass(clean);
+  }
 }
 
 function buildAttendanceRecap(users,absensi){
@@ -3415,8 +3437,6 @@ function buildAttendanceRecap(users,absensi){
     const alfa=count('alfa');
     const tercatat=unique.length;
     const belum=Math.max(0,totalDays-tercatat);
-    const points=unique.reduce((sum,a)=>sum+(ATTENDANCE_SCORE[a.status]??0),0);
-    const score=Math.round(points/(totalDays*100)*100);
     const last=unique.sort((a,b)=>b.timestamp-a.timestamp)[0]||null;
     return {
       user:u,
@@ -3427,12 +3447,11 @@ function buildAttendanceRecap(users,absensi){
       alfa,
       belum,
       tercatat,
-      points,
-      score,
+      grade:manualGradeFor(u.id),
       last,
       records
     };
-  }).sort((a,b)=>b.score-a.score||b.hadir-a.hadir||a.user.name.localeCompare(b.user.name));
+  }).sort((a,b)=>b.hadir-a.hadir||a.user.name.localeCompare(b.user.name));
 }
 
 function distanceInMeters(a,b){
@@ -4151,8 +4170,8 @@ function renderAdminRecap(users,absensi){
   const today=todayStr();
   const totalUsers=users.length;
   const totalMembers=users.filter(u=>u.role==='anggota'||u.role==='admin').length;
-  const avgScore=recap.length?Math.round(recap.reduce((sum,r)=>sum+r.score,0)/recap.length):0;
-  const perfect=recap.filter(r=>r.score>=100).length;
+  const graded=recap.filter(r=>String(r.grade||'').trim()).length;
+  const ungraded=Math.max(0,recap.length-graded);
   const rows=recap.length===0
     ?`<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--text-light)">Belum ada profile pengguna</td></tr>`
     :recap.map(r=>{
@@ -4170,7 +4189,10 @@ function renderAdminRecap(users,absensi){
         <td><span class="sb sb-alfa">${r.alfa}</span></td>
         <td>${r.belum}</td>
         <td>${r.tercatat}</td>
-        <td><span class="score-pill ${getScoreClass(r.score)}">${r.score}</span></td>
+        <td>
+          <input class="ipt" style="width:92px;height:32px;padding:0 8px;font-size:0.75rem;font-weight:800" value="${esc(r.grade)}" placeholder="Nilai" oninput="setManualGrade('${u.id}',this.value)">
+          <div id="gradeBadge-${u.id}" class="score-pill ${getScoreClass(r.grade)}" style="margin-top:6px">${esc(r.grade)||'Belum dinilai'}</div>
+        </td>
         <td>${r.last?`${STATUS_LABELS[r.last.status]||r.last.status} · ${fmtDate(r.last.date)}`:'Belum ada'}</td>
         <td><button class="action-btn" onclick="showAdminProfileDetail('${u.id}')" title="Lihat Profile"><i class="fa-solid fa-eye"></i></button></td>
       </tr>`;
@@ -4180,14 +4202,14 @@ function renderAdminRecap(users,absensi){
     <div class="admin-recap-grid">
       <div class="admin-recap-card"><strong>${totalUsers}</strong><span>Total Profile</span></div>
       <div class="admin-recap-card"><strong>${totalMembers}</strong><span>Anggota/Admin</span></div>
-      <div class="admin-recap-card"><strong>${avgScore}</strong><span>Rata-rata Nilai</span></div>
-      <div class="admin-recap-card"><strong>${perfect}</strong><span>Nilai 100</span></div>
+      <div class="admin-recap-card"><strong>${graded}</strong><span>Sudah Dinilai</span></div>
+      <div class="admin-recap-card"><strong>${ungraded}</strong><span>Belum Dinilai</span></div>
     </div>
     <div class="tbl-wrap">
       <div class="tbl-head">
         <div>
           <h3>Rekap Profile & Nilai Kehadiran</h3>
-          <p style="color:var(--text-muted);font-size:0.76rem;font-weight:700;margin-top:4px">Periode ${fmtDate(APP_START_DATE)} sampai ${fmtDate(today)}. Hadir=100, Izin/Sakit=80, Alfa/Belum=0.</p>
+          <p style="color:var(--text-muted);font-size:0.76rem;font-weight:700;margin-top:4px">Periode ${fmtDate(APP_START_DATE)} sampai ${fmtDate(today)}. Nilai diisi manual oleh admin.</p>
         </div>
         <div class="tbl-controls">
           <input class="ipt ipt-search" placeholder="Cari profile..." oninput="filterTbl('recapTable',this.value)">
@@ -4258,7 +4280,7 @@ async function showAdminProfileDetail(uid){
           </div>
         </div>
         <div class="recap-grid" style="margin-bottom:16px">
-          <div class="recap-box"><strong>${recap.score}</strong><span>Nilai</span></div>
+          <div class="recap-box"><strong>${esc(recap.grade)||'-'}</strong><span>Nilai Admin</span></div>
           <div class="recap-box"><strong>${recap.hadir}</strong><span>Hadir</span></div>
           <div class="recap-box"><strong>${recap.izin+recap.sakit}</strong><span>Izin/Sakit</span></div>
           <div class="recap-box"><strong>${recap.alfa+recap.belum}</strong><span>Alfa/Belum</span></div>
@@ -4515,7 +4537,7 @@ async function exportRecapExcel(){
         <td>${r.alfa}</td>
         <td>${r.belum}</td>
         <td>${r.tercatat}</td>
-        <td>${r.score}</td>
+        <td>${esc(r.grade)}</td>
         <td>${r.last?`${STATUS_LABELS[r.last.status]||r.last.status} - ${fmtDate(r.last.date)}`:'Belum ada'}</td>
       </tr>`;
     }).join('');
