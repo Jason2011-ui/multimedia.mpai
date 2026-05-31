@@ -97,6 +97,13 @@ CREATE TABLE IF NOT EXISTS mm_daily_qr (
 
 ALTER TABLE mm_daily_qr ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '24 hours');
 
+CREATE TABLE IF NOT EXISTS mm_app_settings (
+  setting_key   TEXT PRIMARY KEY,
+  setting_value TEXT NOT NULL DEFAULT '',
+  updated_by    TEXT REFERENCES users(id) ON DELETE SET NULL,
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
 DELETE FROM absensi a
 USING absensi b
 WHERE a.ctid < b.ctid
@@ -884,6 +891,46 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION mm_get_sheet_config()
+RETURNS JSONB
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT jsonb_build_object(
+    'sheetUrl', 'https://docs.google.com/spreadsheets/d/1hdEFMTRURThsg8SosbPIEFP8vUeZ9_0TOrm747RztSA/edit?usp=sharing',
+    'webhookUrl', COALESCE((SELECT setting_value FROM mm_app_settings WHERE setting_key = 'google_sheet_webhook_url'), '')
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION mm_admin_set_sheet_config(p_token TEXT, p_webhook_url TEXT DEFAULT '')
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_admin users;
+  v_url TEXT := TRIM(COALESCE(p_webhook_url, ''));
+BEGIN
+  v_admin := mm_current_user(p_token);
+  IF v_admin.role <> 'admin' THEN
+    RAISE EXCEPTION 'Hanya admin yang dapat mengubah konfigurasi Spreadsheet';
+  END IF;
+
+  IF v_url <> '' AND v_url !~ '^https://script\.google\.com/macros/s/.+/exec$' THEN
+    RAISE EXCEPTION 'URL harus berupa Web App Google Apps Script yang valid';
+  END IF;
+
+  INSERT INTO mm_app_settings (setting_key, setting_value, updated_by, updated_at)
+  VALUES ('google_sheet_webhook_url', v_url, v_admin.id, NOW())
+  ON CONFLICT (setting_key) DO UPDATE
+  SET setting_value = EXCLUDED.setting_value, updated_by = EXCLUDED.updated_by, updated_at = NOW();
+
+  RETURN jsonb_build_object('ok', TRUE, 'webhookUrl', v_url);
+END;
+$$;
+
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE absensi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_sessions ENABLE ROW LEVEL SECURITY;
@@ -894,6 +941,7 @@ ALTER TABLE mm_social_likes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_social_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_social_shares ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mm_daily_qr ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mm_app_settings ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "allow_all_users" ON users;
 DROP POLICY IF EXISTS "allow_all_absensi" ON absensi;
@@ -907,6 +955,7 @@ DROP POLICY IF EXISTS "deny_direct_social_likes" ON mm_social_likes;
 DROP POLICY IF EXISTS "deny_direct_social_comments" ON mm_social_comments;
 DROP POLICY IF EXISTS "deny_direct_social_shares" ON mm_social_shares;
 DROP POLICY IF EXISTS "deny_direct_daily_qr" ON mm_daily_qr;
+DROP POLICY IF EXISTS "deny_direct_app_settings" ON mm_app_settings;
 
 CREATE POLICY "deny_direct_users" ON users FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_absensi" ON absensi FOR ALL USING (FALSE) WITH CHECK (FALSE);
@@ -918,6 +967,7 @@ CREATE POLICY "deny_direct_social_likes" ON mm_social_likes FOR ALL USING (FALSE
 CREATE POLICY "deny_direct_social_comments" ON mm_social_comments FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_social_shares" ON mm_social_shares FOR ALL USING (FALSE) WITH CHECK (FALSE);
 CREATE POLICY "deny_direct_daily_qr" ON mm_daily_qr FOR ALL USING (FALSE) WITH CHECK (FALSE);
+CREATE POLICY "deny_direct_app_settings" ON mm_app_settings FOR ALL USING (FALSE) WITH CHECK (FALSE);
 
 REVOKE ALL ON users FROM anon, authenticated;
 REVOKE ALL ON absensi FROM anon, authenticated;
@@ -929,6 +979,7 @@ REVOKE ALL ON mm_social_likes FROM anon, authenticated;
 REVOKE ALL ON mm_social_comments FROM anon, authenticated;
 REVOKE ALL ON mm_social_shares FROM anon, authenticated;
 REVOKE ALL ON mm_daily_qr FROM anon, authenticated;
+REVOKE ALL ON mm_app_settings FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_login(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_register(TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_me(TEXT) TO anon, authenticated;
@@ -955,3 +1006,5 @@ GRANT EXECUTE ON FUNCTION mm_add_social_share(TEXT, UUID) TO anon, authenticated
 GRANT EXECUTE ON FUNCTION mm_admin_set_daily_qr(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_admin_delete_daily_qr(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_daily_qr(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_get_sheet_config() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_admin_set_sheet_config(TEXT, TEXT) TO anon, authenticated;

@@ -3291,8 +3291,25 @@ async function callRpc(fn,args={}){
   return {data,error};
 }
 
+async function getSheetWebhookUrl(){
+  if(GOOGLE_SHEET_WEBHOOK_URL)return GOOGLE_SHEET_WEBHOOK_URL;
+  try{
+    const {data,error}=await callRpc('mm_get_sheet_config');
+    if(error)return '';
+    return data?.webhookUrl||'';
+  }catch(e){
+    return '';
+  }
+}
+
+async function saveSheetWebhookUrl(url){
+  const sess=getSession();
+  return await callRpc('mm_admin_set_sheet_config',{p_token:sess?.token||'',p_webhook_url:url||''});
+}
+
 async function syncAttendanceToSpreadsheet(rec){
-  if(!GOOGLE_SHEET_WEBHOOK_URL)return {ok:false,skipped:true};
+  const webhookUrl=await getSheetWebhookUrl();
+  if(!webhookUrl)return {ok:false,skipped:true,message:'Webhook Spreadsheet belum dikonfigurasi admin'};
   const payload={
     sheetUrl:GOOGLE_SHEET_URL,
     nama:rec.name,
@@ -3305,7 +3322,7 @@ async function syncAttendanceToSpreadsheet(rec){
     kodeQr:rec.qrCode||''
   };
   try{
-    await fetch(GOOGLE_SHEET_WEBHOOK_URL,{
+    await fetch(webhookUrl,{
       method:'POST',
       mode:'no-cors',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -3757,7 +3774,8 @@ function buildActions(){
 }
 
 let currentPage='beranda';
-function navigate(page){
+function navigate(page,opts={}){
+  const samePage=currentPage===page;
   document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
   const el=document.getElementById('page-'+page);
   if(!el)return;
@@ -3765,7 +3783,7 @@ function navigate(page){
   currentPage=page;
   buildNav();
   buildActions();
-  window.scrollTo({top:0,behavior:'smooth'});
+  if(opts.scroll!==false&&!samePage)window.scrollTo({top:0,behavior:'auto'});
   if(page==='absensi')renderAbsensi();
   if(page==='profile')renderProfile();
   if(page==='typing')renderTyping();
@@ -4341,15 +4359,18 @@ async function doAbsen(status){
     };
     const error=await addAbsensi(rec);
     if(error){toast('Gagal mencatat absensi: '+(error.message||'Error'),'error');return;}
-    const sheetSync=await syncAttendanceToSpreadsheet(rec);
-    if(sheetSync.ok)toast('Absensi juga dikirim ke Spreadsheet.','success');
     toast('Kehadiran '+STATUS_LABELS[status]+' berhasil dicatat!','success');
     renderAbsensi();
+    syncAttendanceToSpreadsheet(rec).then(sheetSync=>{
+      if(sheetSync.ok)toast('Absensi juga dikirim ke Spreadsheet.','success');
+      else if(sheetSync.skipped&&currentUser?.role==='admin')toast(sheetSync.message||'Webhook Spreadsheet belum dikonfigurasi.','info');
+    });
   }catch(e){toast('Gagal terhubung ke database!','error');}
 }
 
 let qrScanStream=null;
 let qrScanTimer=null;
+let qrScanSubmitting=false;
 
 function closeQrScanner(){
   if(qrScanTimer){clearInterval(qrScanTimer);qrScanTimer=null;}
@@ -4361,6 +4382,7 @@ function closeQrScanner(){
 }
 
 async function openQrScanner(){
+  qrScanSubmitting=false;
   const overlay=document.createElement('div');
   overlay.className='overlay show';
   overlay.id='qrScannerOverlay';
@@ -4368,7 +4390,7 @@ async function openQrScanner(){
     <div class="modal">
       <button class="modal-close" onclick="closeQrScanner()"><i class="fas fa-times"></i></button>
       <h2>Scan QR Harian</h2>
-      <p class="modal-sub">Arahkan kamera ke QR dari admin. Jika browser tidak mendukung scanner, ketik kode manual.</p>
+      <p class="modal-sub">Arahkan kamera ke QR dari admin. Saat QR terbaca, Hadir akan dikirim otomatis.</p>
       <video id="qrScannerVideo" class="qr-video" autoplay muted playsinline></video>
       <div id="qrScannerStatus" class="location-result" style="display:block;margin-top:10px">Menyiapkan kamera...</div>
       <div class="qr-scan-actions">
@@ -4393,10 +4415,15 @@ async function openQrScanner(){
       try{
         const codes=await detector.detect(video);
         if(codes.length){
+          if(qrScanSubmitting)return;
+          qrScanSubmitting=true;
           const value=(codes[0].rawValue||'').trim();
-          document.getElementById('attendanceQrCode').value=value;
-          toast('Kode QR terbaca.','success');
+          const input=document.getElementById('attendanceQrCode');
+          if(input)input.value=value;
+          status.textContent='QR terbaca. Mengirim absen Hadir...';
+          toast('QR terbaca, absen Hadir diproses otomatis.','success');
           closeQrScanner();
+          setTimeout(()=>doAbsen('hadir'),120);
         }
       }catch(e){}
     },650);
@@ -4740,7 +4767,7 @@ async function renderAdmin(){
       <div class="tab-panel ${adminTab==='rekap'?'active':''}" id="tp-rekap">${renderAdminRecap(users,absensi)}</div>
       <div class="tab-panel ${adminTab==='team'?'active':''}" id="tp-team">${renderTeamTable()}</div>
     </div>`;
-    if(adminTab==='absen')setTimeout(()=>showDailyQr(false),0);
+    if(adminTab==='absen')setTimeout(()=>{showDailyQr(false);loadSheetWebhookConfig(false);},0);
   }catch(e){
     el.innerHTML=`
       <div class="locked">
@@ -4825,6 +4852,20 @@ function renderAbsenTable(absensi,users){
   const memberOpts=users.filter(u=>u.role==='anggota'||u.role==='admin').map(u=>`<option value="${u.id}">${u.name} (@${u.username})</option>`).join('');
 
   return `
+  <div class="alfa-form">
+    <h4><i class="fa-solid fa-table text-primary"></i> Sinkron Otomatis Google Spreadsheet</h4>
+    <div class="alfa-row">
+      <div class="alfa-field" style="grid-column:span 2">
+        <label>Apps Script Web App URL</label>
+        <input type="url" id="sheetWebhookUrl" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <button class="btn-primary" style="height:42px; border-radius: 12px; font-weight:700;" onclick="saveSheetWebhookConfig()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+      <button class="btn-ghost" style="height:42px; border-radius: 12px; font-weight:700;" onclick="loadSheetWebhookConfig(true)"><i class="fa-solid fa-rotate"></i> Cek</button>
+    </div>
+    <p style="color:var(--text-muted);font-size:0.76rem;font-weight:700;margin-top:10px">Link spreadsheet tujuan: <a href="${GOOGLE_SHEET_URL}" target="_blank" style="color:var(--primary)">Buka Google Sheet</a>. Link edit spreadsheet tidak bisa menerima data langsung; gunakan URL Web App dari file google_sheets_apps_script.js.</p>
+    <div id="sheetWebhookResult" class="location-result"></div>
+  </div>
+
   <div class="alfa-form">
     <h4><i class="fa-solid fa-qrcode text-primary"></i> Kode QR Harian Hadir</h4>
     <div class="alfa-row">
@@ -5143,7 +5184,9 @@ async function addAlfaByAdmin(){
     };
     const error=await addAbsensi(rec);
     if(error){toast('Gagal menyimpan: '+(error.message||'Error'),'error');return;}
-    await syncAttendanceToSpreadsheet(rec);
+    syncAttendanceToSpreadsheet(rec).then(sheetSync=>{
+      if(sheetSync.ok)toast('Absensi admin juga dikirim ke Spreadsheet.','success');
+    });
     toast(`Status ${STATUS_LABELS[status]} ditambahkan untuk ${user.name}`,'success');
     renderAdmin();
   }catch(e){toast('Gagal menghubungkan ke backend!','error');}
@@ -5166,6 +5209,41 @@ async function setAbsensiValidation(id,decision){
     toast(`Catatan ${decision} oleh admin.`,'success');
     renderAdmin();
   }catch(e){toast('Gagal terhubung ke backend.','error');}
+}
+
+async function loadSheetWebhookConfig(showToast=false){
+  const input=document.getElementById('sheetWebhookUrl');
+  const box=document.getElementById('sheetWebhookResult');
+  const url=await getSheetWebhookUrl();
+  if(input)input.value=url||'';
+  if(box){
+    if(url){
+      box.className='location-result show ok';
+      box.innerHTML='<i class="fa-solid fa-circle-check"></i> Webhook Spreadsheet aktif. Absen baru akan dikirim otomatis.';
+    }else{
+      box.className='location-result show warn';
+      box.innerHTML='<i class="fa-solid fa-circle-info"></i> Webhook belum diisi. Data tetap aman di Supabase, tetapi belum otomatis masuk Google Sheet.';
+    }
+  }
+  if(showToast)toast(url?'Webhook Spreadsheet aktif.':'Webhook belum dikonfigurasi.','info');
+}
+
+async function saveSheetWebhookConfig(){
+  const input=document.getElementById('sheetWebhookUrl');
+  const box=document.getElementById('sheetWebhookResult');
+  const url=(input?.value||'').trim();
+  if(url&&!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/i.test(url)){
+    toast('Masukkan URL Web App Apps Script yang berakhiran /exec.','error');
+    input?.focus();
+    return;
+  }
+  const {error}=await saveSheetWebhookUrl(url);
+  if(error){toast(error.message||'Gagal menyimpan webhook.','error');return;}
+  if(box){
+    box.className=`location-result show ${url?'ok':'warn'}`;
+    box.innerHTML=url?'<i class="fa-solid fa-circle-check"></i> Webhook disimpan. Absen berikutnya akan dikirim ke Spreadsheet.':'Webhook dikosongkan.';
+  }
+  toast('Konfigurasi Spreadsheet disimpan.','success');
 }
 
 async function generateDailyQr(){
