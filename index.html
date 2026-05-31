@@ -946,11 +946,20 @@ img {
   font-size: 0.78rem;
   font-weight: 800;
   flex-shrink: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.social-post-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .social-post-name {
   font-size: 0.88rem;
   font-weight: 800;
+  cursor: pointer;
 }
 
 .social-post-meta {
@@ -3638,6 +3647,13 @@ async function getProfileCustom(){
   return data||{avatarUrl:'',bio:''};
 }
 
+async function getPublicProfile(userId){
+  const sess=getSession();
+  const {data,error}=await callRpc('mm_get_public_profile',{p_token:sess?.token||'',p_user_id:userId});
+  if(error)return{error};
+  return data||null;
+}
+
 async function saveProfileCustom(avatarUrl,bio=''){
   const sess=getSession();
   return await callRpc('mm_update_profile_custom',{p_token:sess?.token||'',p_avatar_url:avatarUrl||'',p_bio:bio||''});
@@ -4040,10 +4056,11 @@ function renderSocialPost(p){
   return `
     <article class="social-post" id="post-${p.id}">
       <div class="social-post-head">
-        <div class="social-post-avatar">${initialsOf(p.name)}</div>
+        <button class="social-post-avatar" onclick="openPublicProfile('${esc(p.userId||'')}')">${renderSmallAvatar(p.name,p.avatarUrl)}</button>
         <div class="social-post-head-main">
-          <div class="social-post-name">${esc(p.name)}</div>
+          <button class="social-post-name" onclick="openPublicProfile('${esc(p.userId||'')}')">${esc(p.name)}</button>
           <div class="social-post-meta">@${esc(p.username)} - ${new Date(p.createdAt).toLocaleString('id-ID')}</div>
+          ${p.bio?`<div class="social-post-meta">${esc(p.bio)}</div>`:''}
         </div>
         ${adminTools}
       </div>
@@ -4183,6 +4200,43 @@ async function removeSocialPost(id){
     toast('Postingan Galery MM dihapus.','success');
     renderGalleryFeed();
   });
+}
+
+async function openPublicProfile(userId){
+  if(!userId){toast('Profile tidak ditemukan.','error');return;}
+  const data=await getPublicProfile(userId);
+  if(!data||data.error){toast(data?.error?.message||'Gagal memuat profile.','error');return;}
+  const posts=(data.posts||[]).map(p=>`
+    <div class="profile-log-item">
+      <div class="profile-log-top">
+        <strong>${esc(galleryFilterLabel(p.category||inferSocialType(p)))}</strong>
+        <span style="font-size:0.7rem;color:var(--text-muted);font-weight:800">${p.createdAt?new Date(p.createdAt).toLocaleDateString('id-ID'):'-'}</span>
+      </div>
+      <div class="profile-log-note">${esc(p.caption||'-')}</div>
+    </div>`).join('')||`<p style="text-align:center;color:var(--text-light);font-size:0.8rem;padding:18px 0">Belum ada posting Galery.</p>`;
+  const overlay=document.createElement('div');
+  overlay.className='overlay show';
+  overlay.innerHTML=`
+    <div class="modal" style="max-width:720px">
+      <button class="modal-close" onclick="this.closest('.overlay').remove()"><i class="fas fa-times"></i></button>
+      <div class="profile-hero" style="margin-bottom:18px">
+        ${renderProfileAvatar(data.name,data.avatarUrl)}
+        <div>
+          <h2 style="margin-bottom:2px">${esc(data.name)}</h2>
+          <p class="modal-sub" style="margin:0">@${esc(data.username)} - ${esc(data.role)}</p>
+          ${data.bio?`<p class="modal-sub" style="margin:4px 0 0">${esc(data.bio)}</p>`:''}
+        </div>
+      </div>
+      <div class="recap-grid" style="margin-bottom:16px">
+        <div class="recap-box"><strong>${data.stats?.hadir||0}</strong><span>Hadir</span></div>
+        <div class="recap-box"><strong>${data.stats?.izin||0}</strong><span>Izin</span></div>
+        <div class="recap-box"><strong>${data.stats?.sakit||0}</strong><span>Sakit</span></div>
+        <div class="recap-box"><strong>${data.stats?.posts||0}</strong><span>Posting</span></div>
+      </div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:10px">Posting Galery Terbaru</h3>
+      <div class="profile-log" style="max-height:320px;overflow:auto">${posts}</div>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -4652,6 +4706,12 @@ function renderProfileAvatar(name,avatarUrl=''){
   return avatarUrl
     ?`<div class="profile-avatar"><img src="${esc(avatarUrl)}" alt="Foto profile" onerror="this.remove();this.parentElement.textContent='${initialsOf(name)}'"></div>`
     :`<div class="profile-avatar">${initialsOf(name)}</div>`;
+}
+
+function renderSmallAvatar(name,avatarUrl=''){
+  return avatarUrl
+    ?`<img src="${esc(avatarUrl)}" alt="${esc(name)}" onerror="this.remove();this.parentElement.textContent='${initialsOf(name)}'">`
+    :initialsOf(name);
 }
 
 function isProfileImageMedia(url){

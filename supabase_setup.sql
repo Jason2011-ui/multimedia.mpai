@@ -587,6 +587,51 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION mm_get_public_profile(p_token TEXT, p_user_id TEXT)
+RETURNS JSONB
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_viewer users;
+  v_user users;
+  v_profile mm_profile_custom;
+BEGIN
+  v_viewer := mm_current_user(p_token);
+  SELECT * INTO v_user FROM users WHERE id = p_user_id LIMIT 1;
+  IF v_user.id IS NULL THEN
+    RAISE EXCEPTION 'Profile tidak ditemukan';
+  END IF;
+  SELECT * INTO v_profile FROM mm_profile_custom WHERE user_id = p_user_id;
+
+  RETURN jsonb_build_object(
+    'id', v_user.id,
+    'name', v_user.name,
+    'username', v_user.username,
+    'role', v_user.role,
+    'avatarUrl', COALESCE(v_profile.avatar_url, ''),
+    'bio', COALESCE(v_profile.bio, ''),
+    'stats', jsonb_build_object(
+      'hadir', (SELECT COUNT(*) FROM absensi WHERE user_id = p_user_id AND status = 'hadir'),
+      'izin', (SELECT COUNT(*) FROM absensi WHERE user_id = p_user_id AND status = 'izin'),
+      'sakit', (SELECT COUNT(*) FROM absensi WHERE user_id = p_user_id AND status = 'sakit'),
+      'posts', (SELECT COUNT(*) FROM mm_social_posts WHERE user_id = p_user_id)
+    ),
+    'posts', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+        'id', p.id,
+        'caption', p.caption,
+        'mediaUrl', p.media_url,
+        'category', p.media_category,
+        'createdAt', p.created_at
+      ) ORDER BY p.created_at DESC)
+      FROM (SELECT * FROM mm_social_posts WHERE user_id = p_user_id ORDER BY created_at DESC LIMIT 8) p
+    ), '[]'::jsonb)
+  );
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION mm_delete_user(p_token TEXT, p_user_id TEXT)
 RETURNS JSONB
 LANGUAGE PLPGSQL
@@ -768,8 +813,11 @@ BEGIN
   RETURN (
     SELECT COALESCE(jsonb_agg(jsonb_build_object(
       'id', p.id,
+      'userId', p.user_id,
       'name', p.name,
       'username', p.username,
+      'avatarUrl', COALESCE(pc.avatar_url, ''),
+      'bio', COALESCE(pc.bio, ''),
       'caption', p.caption,
       'mediaUrl', p.media_url,
       'category', p.media_category,
@@ -780,6 +828,7 @@ BEGIN
       'comments', COALESCE((SELECT jsonb_agg(jsonb_build_object('id', c.id, 'name', c.name, 'username', c.username, 'body', c.body, 'createdAt', c.created_at) ORDER BY c.created_at ASC) FROM mm_social_comments c WHERE c.post_id = p.id), '[]'::jsonb)
     ) ORDER BY p.created_at DESC), '[]'::jsonb)
     FROM mm_social_posts p
+    LEFT JOIN mm_profile_custom pc ON pc.user_id = p.user_id
   );
 END;
 $$;
@@ -1115,6 +1164,7 @@ GRANT EXECUTE ON FUNCTION mm_update_user_role(TEXT, TEXT, TEXT) TO anon, authent
 GRANT EXECUTE ON FUNCTION mm_update_user_name(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_profile_custom(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_update_profile_custom(TEXT, TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mm_get_public_profile(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_delete_user(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_get_grades(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION mm_set_grade(TEXT, TEXT, TEXT) TO anon, authenticated;
