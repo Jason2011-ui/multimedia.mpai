@@ -716,8 +716,8 @@ footer p{color:var(--text3);font-size:0.8rem}
           <h4>Lutfiana</h4><p>Desain Grafis</p>
         </div>
         <div class="student-card">
-          <div class="ava-sm"><img src="assets/nailah.png" alt="-" onerror="this.style.display='none';this.parentElement.innerHTML='<span>N</span>'"></div>
-          <h4>-</h4><p>Sastra</p>
+          <div class="ava-sm"><img src="assets/nadr.png" alt="Nadira" onerror="this.style.display='none';this.parentElement.innerHTML='<span>N</span>'"></div>
+          <h4>Nadira</h4><p>Sastra</p>
         </div>
         <div class="student-card">
           <div class="ava-sm"><img src="assets/Zahra.png" alt="Zahra" onerror="this.style.display='none';this.parentElement.innerHTML='<span>Z</span>'"></div>
@@ -801,68 +801,223 @@ footer p{color:var(--text3);font-size:0.8rem}
   <div class="footer-logo"><span>Multimedia</span> </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* ── DB ── */
-const DB={
-  get(k){try{return JSON.parse(localStorage.getItem('mm_'+k))||null}catch{return null}},
-  set(k,v){localStorage.setItem('mm_'+k,JSON.stringify(v))},
-  del(k){localStorage.removeItem('mm_'+k)}
-};
+/* ══════════════════════════════════════════════════
+   ⚙️  KONFIGURASI SUPABASE — GANTI DI SINI
+   ══════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://rqerllbcgfcvrwunvvfx.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_ZzSxctWwGU6vB4nCdsAaqQ_NcXOCl0u'; // anon/public key
 
-function initDB(){
-  if(!DB.get('users')) DB.set('users',[{id:'admin-1',username:'admin',name:'Administrator',password:hashPw('admin123'),role:'admin',createdAt:new Date().toISOString()}]);
-  if(!DB.get('absensi')) DB.set('absensi',[]);
-  if(!DB.get('session')) DB.set('session',null);
+/* ── INIT ── */
+const _isConfigured = !SUPABASE_URL.includes('MASUKKAN') && !SUPABASE_KEY.includes('MASUKKAN');
+const _sb = _isConfigured ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+/* ── SETUP CHECK BANNER ── */
+function showSetupBanner(){
+  if(SUPABASE_URL.includes('MASUKKAN')||SUPABASE_KEY.includes('MASUKKAN')){
+    const b=document.createElement('div');
+    b.id='setup-banner';
+    b.style.cssText='position:fixed;top:60px;left:0;right:0;z-index:5000;background:rgba(245,158,11,0.15);border-bottom:1px solid rgba(245,158,11,0.35);padding:12px 20px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:0.85rem;color:#f59e0b;font-family:Plus Jakarta Sans,sans-serif;text-align:center;flex-wrap:wrap;';
+    b.innerHTML=`<i class="fas fa-exclamation-triangle"></i><strong>Setup Diperlukan:</strong> Isi <code style="background:rgba(255,255,255,0.1);padding:1px 6px;border-radius:4px">SUPABASE_URL</code> dan <code style="background:rgba(255,255,255,0.1);padding:1px 6px;border-radius:4px">SUPABASE_KEY</code> di bagian atas script, lalu buat tabel SQL di bawah ini. <a href="#" onclick="showSqlModal();return false;" style="color:#f59e0b;font-weight:700;text-decoration:underline">Lihat SQL Setup →</a>`;
+    document.body.appendChild(b);
+    document.getElementById('app').style.paddingTop='108px';
+  }
 }
+
+function showSqlModal(){
+  const sql=`-- Jalankan SQL ini di Supabase > SQL Editor
+
+-- Tabel users
+CREATE TABLE IF NOT EXISTS users (
+  id          TEXT PRIMARY KEY,
+  username    TEXT UNIQUE NOT NULL,
+  name        TEXT NOT NULL,
+  password    TEXT NOT NULL,
+  role        TEXT NOT NULL DEFAULT 'pengunjung',
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert admin default (password: admin123)
+INSERT INTO users (id, username, name, password, role)
+VALUES ('admin-1','admin','Administrator',
+  'h' || abs(hashtext('admin123'))::text || '8' || '5' || '9','admin')
+ON CONFLICT (id) DO NOTHING;
+
+-- Tabel absensi
+CREATE TABLE IF NOT EXISTS absensi (
+  id          TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  username    TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  date        TEXT NOT NULL,
+  timestamp   BIGINT NOT NULL,
+  status      TEXT NOT NULL,
+  added_by    TEXT DEFAULT 'self',
+  session_id  TEXT
+);
+
+-- RLS: izinkan semua operasi dari anon key (sesuaikan di production)
+ALTER TABLE users   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE absensi ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "allow_all_users"   ON users   FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all_absensi" ON absensi FOR ALL USING (true) WITH CHECK (true);`;
+
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML=`
+    <div style="background:#1c1c21;border:1px solid #38383f;border-radius:16px;max-width:700px;width:100%;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;">
+      <div style="padding:20px 24px;border-bottom:1px solid #222228;display:flex;align-items:center;justify-content:space-between;">
+        <div><h3 style="font-size:1rem;font-weight:700;margin-bottom:2px;">🗄️ SQL Setup Supabase</h3>
+        <p style="font-size:0.8rem;color:#9898a8">Buka Supabase > SQL Editor, paste & run kode berikut:</p></div>
+        <button onclick="this.closest('div[style]').remove()" style="background:transparent;border:1px solid #38383f;color:#9898a8;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:0.9rem;">✕</button>
+      </div>
+      <div style="overflow-y:auto;padding:16px 20px;">
+        <pre style="background:#0e0e11;border:1px solid #222228;border-radius:10px;padding:16px;font-size:0.78rem;line-height:1.7;color:#eeeef0;white-space:pre-wrap;word-break:break-word;font-family:monospace;">${sql}</pre>
+      </div>
+      <div style="padding:14px 20px;border-top:1px solid #222228;">
+        <button onclick="navigator.clipboard.writeText(\`${sql.replace(/`/g,'\\`')}\`).then(()=>toast('SQL disalin!','success'))" style="background:#5d5fef;border:none;color:#fff;padding:9px 20px;border-radius:8px;font-weight:700;font-size:0.85rem;cursor:pointer;">📋 Salin SQL</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+/* ══════════════════════════════════════════════════
+   ── DB HELPERS (Supabase)
+   ══════════════════════════════════════════════════ */
 function hashPw(pw){let h=0;for(let i=0;i<pw.length;i++){h=(Math.imul(31,h)+pw.charCodeAt(i))|0}return 'h'+Math.abs(h).toString(36)+pw.length.toString(36)+pw.split('').reverse().join('').split('').reduce((a,c)=>a+c.charCodeAt(0),0).toString(36);}
-function getUsers(){return DB.get('users')||[]}
-function saveUsers(u){DB.set('users',u)}
-function getAbsensi(){return DB.get('absensi')||[]}
-function saveAbsensi(a){DB.set('absensi',a)}
-function getSession(){return DB.get('session')}
-function saveSession(s){DB.set('session',s)}
-function clearSession(){DB.set('session',null)}
+
+/* Session pakai localStorage (hanya menyimpan ID sesi, bukan data sensitif) */
+function getSession(){try{return JSON.parse(localStorage.getItem('mm_session'))||null}catch{return null}}
+function saveSession(s){localStorage.setItem('mm_session',JSON.stringify(s))}
+function clearSession(){localStorage.removeItem('mm_session')}
+
+async function getUsers(){
+  if(!_sb){console.warn('Supabase belum dikonfigurasi');return[];}
+  const {data,error}=await _sb.from('users').select('*').order('created_at');
+  if(error){console.error('getUsers',error);return[];}
+  return data.map(u=>({
+    id:u.id,username:u.username,name:u.name,password:u.password,
+    role:u.role,createdAt:u.created_at
+  }));
+}
+
+async function saveUsers(users){
+  // Used only for bulk-replace; in practice we use targeted upsert/delete
+  for(const u of users){
+    await _sb.from('users').upsert({
+      id:u.id,username:u.username,name:u.name,password:u.password,
+      role:u.role,created_at:u.createdAt||new Date().toISOString()
+    },{onConflict:'id'});
+  }
+}
+
+async function createUser(u){
+  if(!_sb) return {message:'Supabase belum dikonfigurasi'};
+  const {error}=await _sb.from('users').insert({
+    id:u.id,username:u.username,name:u.name,password:u.password,
+    role:u.role,created_at:u.createdAt
+  });
+  return error;
+}
+
+async function updateUserRole(uid,newRole){
+  if(!_sb) return {message:'Supabase belum dikonfigurasi'};
+  const {error}=await _sb.from('users').update({role:newRole}).eq('id',uid);
+  return error;
+}
+
+async function deleteUserById(uid){
+  if(!_sb) return {message:'Supabase belum dikonfigurasi'};
+  const {error}=await _sb.from('users').delete().eq('id',uid);
+  return error;
+}
+
+async function getAbsensi(){
+  if(!_sb){console.warn('Supabase belum dikonfigurasi');return[];}
+  const {data,error}=await _sb.from('absensi').select('*').order('timestamp',{ascending:false});
+  if(error){console.error('getAbsensi',error);return[];}
+  return data.map(a=>({
+    id:a.id,userId:a.user_id,username:a.username,name:a.name,
+    date:a.date,timestamp:a.timestamp,status:a.status,
+    addedBy:a.added_by,sessionId:a.session_id
+  }));
+}
+
+async function addAbsensi(a){
+  if(!_sb) return {message:'Supabase belum dikonfigurasi'};
+  const {error}=await _sb.from('absensi').insert({
+    id:a.id,user_id:a.userId,username:a.username,name:a.name,
+    date:a.date,timestamp:a.timestamp,status:a.status,
+    added_by:a.addedBy||'self',session_id:a.sessionId||null
+  });
+  return error;
+}
+
+async function deleteAbsensiById(id){
+  if(!_sb) return {message:'Supabase belum dikonfigurasi'};
+  const {error}=await _sb.from('absensi').delete().eq('id',id);
+  return error;
+}
+
+async function initDB(){
+  showSetupBanner();
+  // Admin default sudah di-insert via SQL, tidak perlu JS insert
+}
 
 /* ── AUTH ── */
 let currentUser=null;
 
-function doLogin(){
+async function doLogin(){
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value;
   const err=document.getElementById('loginErr');
+  const btn=document.querySelector('#loginModal .btn-block');
   err.style.display='none';
   if(!u||!p){showErr(err,'Isi semua field!');return}
-  const found=getUsers().find(x=>x.username.toLowerCase()===u.toLowerCase()&&x.password===hashPw(p));
-  if(!found){showErr(err,'Username atau password salah!');return}
-  saveSession({userId:found.id,loginAt:new Date().toISOString()});
-  currentUser=found;
-  hideOverlay('login');
-  document.getElementById('loginUser').value='';
-  document.getElementById('loginPass').value='';
-  onLogin();
-  toast('Selamat datang, '+found.name+'!','success');
+  if(btn){btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Memuat...';btn.disabled=true;}
+  try{
+    const users=await getUsers();
+    const found=users.find(x=>x.username.toLowerCase()===u.toLowerCase()&&x.password===hashPw(p));
+    if(!found){showErr(err,'Username atau password salah!');return}
+    saveSession({userId:found.id,loginAt:new Date().toISOString()});
+    currentUser=found;
+    hideOverlay('login');
+    document.getElementById('loginUser').value='';
+    document.getElementById('loginPass').value='';
+    onLogin();
+    toast('Selamat datang, '+found.name+'!','success');
+  }catch(e){showErr(err,'Gagal terhubung ke server. Cek koneksi & konfigurasi Supabase.');}
+  finally{if(btn){btn.innerHTML='Masuk <i class="fas fa-arrow-right"></i>';btn.disabled=false;}}
 }
 
-function doRegister(){
+async function doRegister(){
   const name=document.getElementById('regName').value.trim();
   const u=document.getElementById('regUser').value.trim();
   const p=document.getElementById('regPass').value;
   const err=document.getElementById('regErr');
   const ok=document.getElementById('regOk');
+  const btn=document.querySelector('#registerModal .btn-block');
   err.style.display='none';ok.style.display='none';
   if(!name||!u||!p){showErr(err,'Isi semua field!');return}
   if(u.length<3){showErr(err,'Username minimal 3 karakter!');return}
   if(p.length<6){showErr(err,'Password minimal 6 karakter!');return}
   if(!/^[a-zA-Z0-9_]+$/.test(u)){showErr(err,'Username hanya huruf, angka, underscore!');return}
-  const users=getUsers();
-  if(users.find(x=>x.username.toLowerCase()===u.toLowerCase())){showErr(err,'Username sudah digunakan!');return}
-  const newUser={id:'u'+Date.now(),username:u,name:name,password:hashPw(p),role:'pengunjung',createdAt:new Date().toISOString()};
-  users.push(newUser);saveUsers(users);
-  ok.textContent='Akun berhasil dibuat! Role: Pengunjung.';ok.style.display='block';
-  document.getElementById('regName').value='';
-  document.getElementById('regUser').value='';
-  document.getElementById('regPass').value='';
-  setTimeout(()=>{hideOverlay('register');showOverlay('login');},1800);
+  if(btn){btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Mendaftar...';btn.disabled=true;}
+  try{
+    const users=await getUsers();
+    if(users.find(x=>x.username.toLowerCase()===u.toLowerCase())){showErr(err,'Username sudah digunakan!');return}
+    const newUser={id:'u'+Date.now(),username:u,name:name,password:hashPw(p),role:'pengunjung',createdAt:new Date().toISOString()};
+    const error=await createUser(newUser);
+    if(error){showErr(err,'Gagal membuat akun: '+(error.message||'Error'));return;}
+    ok.textContent='Akun berhasil dibuat! Role: Pengunjung.';ok.style.display='block';
+    document.getElementById('regName').value='';
+    document.getElementById('regUser').value='';
+    document.getElementById('regPass').value='';
+    setTimeout(()=>{hideOverlay('register');showOverlay('login');},1800);
+  }catch(e){showErr(err,'Gagal terhubung ke server. Cek konfigurasi Supabase.');}
+  finally{if(btn){btn.innerHTML='Buat Akun <i class="fas fa-user-plus"></i>';btn.disabled=false;}}
 }
 
 function doLogout(){
@@ -871,11 +1026,15 @@ function doLogout(){
   });
 }
 
-function checkSession(){
+async function checkSession(){
   const sess=getSession();
   if(!sess)return;
-  const found=getUsers().find(x=>x.id===sess.userId);
-  if(found){currentUser=found;onLogin();}
+  try{
+    const users=await getUsers();
+    const found=users.find(x=>x.id===sess.userId);
+    if(found){currentUser=found;onLogin();}
+    else{clearSession();}
+  }catch(e){console.warn('checkSession error',e);}
 }
 
 /* ── NAV ── */
@@ -934,9 +1093,12 @@ function navigate(page){
   if(page==='beranda')updateHeroStats();
 }
 
-function onLogin(){
-  const fresh=getUsers().find(x=>x.id===currentUser.id);
-  if(fresh)currentUser=fresh;
+async function onLogin(){
+  try{
+    const users=await getUsers();
+    const fresh=users.find(x=>x.id===currentUser.id);
+    if(fresh)currentUser=fresh;
+  }catch(e){}
   buildNav();buildActions();navigate('beranda');
 }
 function onLogout(){buildNav();buildActions();navigate('beranda');}
@@ -949,10 +1111,12 @@ function toggleDrawer(){
 function closeDrawer(){document.getElementById('mobileDrawer').classList.remove('open');}
 
 /* ── HERO STATS ── */
-function updateHeroStats(){
-  const u=getUsers().filter(x=>x.role==='anggota'||x.role==='admin').length;
-  const a=getAbsensi().length;
-  animNum('statMembers',u);animNum('statAbsen',a);
+async function updateHeroStats(){
+  try{
+    const [users,absensi]=await Promise.all([getUsers(),getAbsensi()]);
+    animNum('statMembers',users.filter(x=>x.role==='anggota'||x.role==='admin').length);
+    animNum('statAbsen',absensi.length);
+  }catch(e){}
 }
 function animNum(id,target){
   const el=document.getElementById(id);if(!el)return;
@@ -968,7 +1132,7 @@ function fmtTime(ts){return new Date(ts).toLocaleTimeString('id-ID',{hour:'2-dig
 const STATUS_LABELS={hadir:'Hadir',sakit:'Sakit',izin:'Izin',alfa:'Alfa'};
 const STATUS_ICONS={hadir:'fa-check-circle',sakit:'fa-procedures',izin:'fa-file-alt',alfa:'fa-times-circle'};
 
-function renderAbsensi(){
+async function renderAbsensi(){
   const el=document.getElementById('absenContent');
   if(!currentUser){
     el.innerHTML=`<div class="locked"><div class="locked-emoji">🔒</div><h3>Login Diperlukan</h3><p>Silakan login untuk mengakses fitur absensi.</p><button class="btn-hero primary" style="margin-top:16px" onclick="showOverlay('login')">Login Sekarang</button></div>`;
@@ -978,75 +1142,83 @@ function renderAbsensi(){
     el.innerHTML=`<div class="locked"><div class="locked-emoji">🚫</div><h3>Akses Ditolak</h3><p>Fitur absensi hanya untuk Anggota. Hubungi admin untuk upgrade role.</p></div>`;
     return;
   }
-  const today=todayStr();
-  const absensi=getAbsensi();
-  const todayRec=absensi.find(a=>a.userId===currentUser.id&&a.date===today);
-  const history=absensi.filter(a=>a.userId===currentUser.id).sort((a,b)=>b.timestamp-a.timestamp).slice(0,10);
+  el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--text3)"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem"></i><p style="margin-top:12px;font-size:0.88rem">Memuat data...</p></div>`;
+  try{
+    const today=todayStr();
+    const absensi=await getAbsensi();
+    const todayRec=absensi.find(a=>a.userId===currentUser.id&&a.date===today);
+    const history=absensi.filter(a=>a.userId===currentUser.id).sort((a,b)=>b.timestamp-a.timestamp).slice(0,10);
 
-  const statusHTML=todayRec
-    ?`<div class="status-banner status-${todayRec.status}"><i class="fas ${STATUS_ICONS[todayRec.status]}"></i><div><strong>${STATUS_LABELS[todayRec.status]} hari ini</strong><div style="font-size:0.8rem;margin-top:2px;opacity:0.75">Tercatat pukul ${fmtTime(todayRec.timestamp)}</div></div></div>`
-    :`<div class="status-banner status-belum"><i class="fas fa-clock"></i><div><strong>Belum absen hari ini</strong><div style="font-size:0.8rem;margin-top:2px;opacity:0.75">Pilih status kehadiran kamu di bawah</div></div></div>`;
+    const statusHTML=todayRec
+      ?`<div class="status-banner status-${todayRec.status}"><i class="fas ${STATUS_ICONS[todayRec.status]}"></i><div><strong>${STATUS_LABELS[todayRec.status]} hari ini</strong><div style="font-size:0.8rem;margin-top:2px;opacity:0.75">Tercatat pukul ${fmtTime(todayRec.timestamp)}</div></div></div>`
+      :`<div class="status-banner status-belum"><i class="fas fa-clock"></i><div><strong>Belum absen hari ini</strong><div style="font-size:0.8rem;margin-top:2px;opacity:0.75">Pilih status kehadiran kamu di bawah</div></div></div>`;
 
-  const buttonsHTML=todayRec
-    ?`<div class="absen-buttons">
-        <button class="btn-absen-type hadir" disabled><i class="fas fa-check-circle"></i>Hadir</button>
-        <button class="btn-absen-type sakit" disabled><i class="fas fa-procedures"></i>Sakit</button>
-        <button class="btn-absen-type izin" disabled><i class="fas fa-file-alt"></i>Izin</button>
-      </div>`
-    :`<div class="absen-buttons">
-        <button class="btn-absen-type hadir" onclick="doAbsen('hadir')"><i class="fas fa-check-circle"></i>Hadir</button>
-        <button class="btn-absen-type sakit" onclick="doAbsen('sakit')"><i class="fas fa-procedures"></i>Sakit</button>
-        <button class="btn-absen-type izin" onclick="doAbsen('izin')"><i class="fas fa-file-alt"></i>Izin</button>
-      </div>`;
+    const buttonsHTML=todayRec
+      ?`<div class="absen-buttons">
+          <button class="btn-absen-type hadir" disabled><i class="fas fa-check-circle"></i>Hadir</button>
+          <button class="btn-absen-type sakit" disabled><i class="fas fa-procedures"></i>Sakit</button>
+          <button class="btn-absen-type izin" disabled><i class="fas fa-file-alt"></i>Izin</button>
+        </div>`
+      :`<div class="absen-buttons">
+          <button class="btn-absen-type hadir" onclick="doAbsen('hadir')"><i class="fas fa-check-circle"></i>Hadir</button>
+          <button class="btn-absen-type sakit" onclick="doAbsen('sakit')"><i class="fas fa-procedures"></i>Sakit</button>
+          <button class="btn-absen-type izin" onclick="doAbsen('izin')"><i class="fas fa-file-alt"></i>Izin</button>
+        </div>`;
 
-  const historyHTML=history.length===0
-    ?`<p style="text-align:center;color:var(--text3);font-size:0.87rem;padding:24px 0">Belum ada riwayat absen</p>`
-    :history.map(a=>`
-      <div class="history-item">
-        <div>
-          <div class="history-date">${fmtDate(a.date)}</div>
-          <div class="history-time">${fmtTime(a.timestamp)} WIB</div>
+    const historyHTML=history.length===0
+      ?`<p style="text-align:center;color:var(--text3);font-size:0.87rem;padding:24px 0">Belum ada riwayat absen</p>`
+      :history.map(a=>`
+        <div class="history-item">
+          <div>
+            <div class="history-date">${fmtDate(a.date)}</div>
+            <div class="history-time">${fmtTime(a.timestamp)} WIB</div>
+          </div>
+          <span class="sb sb-${a.status}">${STATUS_LABELS[a.status]||a.status}</span>
+        </div>`).join('');
+
+    el.innerHTML=`
+    <div class="absen-wrap">
+      <div class="absen-card">
+        <div class="absen-card-head"><h3>Presensi Harian</h3><p>Catat kehadiran kamu setiap hari latihan</p></div>
+        <div class="absen-card-body">
+          <div class="clock-box">
+            <div class="clock-time" id="liveClock"></div>
+            <div class="clock-date" id="liveDate"></div>
+          </div>
+          ${statusHTML}
+          ${buttonsHTML}
         </div>
-        <span class="sb sb-${a.status}">${STATUS_LABELS[a.status]||a.status}</span>
-      </div>`).join('');
-
-  el.innerHTML=`
-  <div class="absen-wrap">
-    <div class="absen-card">
-      <div class="absen-card-head"><h3>Presensi Harian</h3><p>Catat kehadiran kamu setiap hari latihan</p></div>
-      <div class="absen-card-body">
-        <div class="clock-box">
-          <div class="clock-time" id="liveClock"></div>
-          <div class="clock-date" id="liveDate"></div>
-        </div>
-        ${statusHTML}
-        ${buttonsHTML}
       </div>
-    </div>
-    <div class="absen-card">
-      <div class="absen-card-head"><h3>Riwayat Absen</h3><p>10 catatan terakhir kamu</p></div>
-      <div class="absen-card-body">${historyHTML}</div>
-    </div>
-  </div>`;
-  startClock();
+      <div class="absen-card">
+        <div class="absen-card-head"><h3>Riwayat Absen</h3><p>10 catatan terakhir kamu</p></div>
+        <div class="absen-card-body">${historyHTML}</div>
+      </div>
+    </div>`;
+    startClock();
+  }catch(e){
+    el.innerHTML=`<div class="locked"><div class="locked-emoji">⚠️</div><h3>Gagal Memuat</h3><p>Tidak dapat terhubung ke database. Cek konfigurasi Supabase.</p></div>`;
+  }
 }
 
-function doAbsen(status){
+async function doAbsen(status){
   const today=todayStr();
-  const absensi=getAbsensi();
-  if(absensi.find(a=>a.userId===currentUser.id&&a.date===today)){toast('Sudah absen hari ini!','info');return;}
   const sess=getSession();
   if(!sess||sess.userId!==currentUser.id){toast('Sesi tidak valid, login ulang!','error');doLogout();return;}
-  absensi.push({
-    id:'ab'+Date.now()+Math.random().toString(36).slice(2),
-    userId:currentUser.id,username:currentUser.username,name:currentUser.name,
-    date:today,timestamp:Date.now(),status:status,sessionId:sess.loginAt,
-    addedBy:'self'
-  });
-  saveAbsensi(absensi);
-  const labels={hadir:'Hadir',sakit:'Sakit tercatat',izin:'Izin tercatat'};
-  toast(labels[status]+' ✓','success');
-  renderAbsensi();
+  try{
+    const absensi=await getAbsensi();
+    if(absensi.find(a=>a.userId===currentUser.id&&a.date===today)){toast('Sudah absen hari ini!','info');return;}
+    const rec={
+      id:'ab'+Date.now()+Math.random().toString(36).slice(2),
+      userId:currentUser.id,username:currentUser.username,name:currentUser.name,
+      date:today,timestamp:Date.now(),status:status,sessionId:sess.loginAt,
+      addedBy:'self'
+    };
+    const error=await addAbsensi(rec);
+    if(error){toast('Gagal menyimpan absensi: '+(error.message||'Error'),'error');return;}
+    const labels={hadir:'Hadir',sakit:'Sakit tercatat',izin:'Izin tercatat'};
+    toast(labels[status]+' ✓','success');
+    renderAbsensi();
+  }catch(e){toast('Gagal terhubung ke server!','error');}
 }
 
 function startClock(){
@@ -1064,34 +1236,38 @@ function startClock(){
 
 /* ── ADMIN ── */
 let adminTab='users';
-function renderAdmin(){
+async function renderAdmin(){
   const el=document.getElementById('adminContent');
   if(!currentUser||currentUser.role!=='admin'){
     el.innerHTML=`<div class="locked"><div class="locked-emoji">🛡️</div><h3>Akses Admin</h3><p>Halaman ini hanya untuk administrator.</p></div>`;
     return;
   }
-  const users=getUsers();
-  const absensi=getAbsensi();
-  const total=users.length;
-  const anggota=users.filter(x=>x.role==='anggota').length;
-  const totalAbsen=absensi.length;
-  const todayAbsen=absensi.filter(a=>a.date===todayStr()).length;
+  el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--text3)"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem"></i><p style="margin-top:12px;font-size:0.88rem">Memuat data admin...</p></div>`;
+  try{
+    const [users,absensi]=await Promise.all([getUsers(),getAbsensi()]);
+    const total=users.length;
+    const anggota=users.filter(x=>x.role==='anggota').length;
+    const totalAbsen=absensi.length;
+    const todayAbsen=absensi.filter(a=>a.date===todayStr()).length;
 
-  el.innerHTML=`
-  <div class="admin-wrap">
-    <div class="stat-row">
-      <div class="stat-box"><div class="icon">👥</div><div class="num" style="color:var(--acc-h)">${total}</div><div class="lbl">Total Pengguna</div></div>
-      <div class="stat-box"><div class="icon">🎓</div><div class="num" style="color:var(--green)">${anggota}</div><div class="lbl">Anggota Aktif</div></div>
-      <div class="stat-box"><div class="icon">📋</div><div class="num" style="color:var(--amber)">${totalAbsen}</div><div class="lbl">Total Absensi</div></div>
-      <div class="stat-box"><div class="icon">📅</div><div class="num" style="color:var(--acc)">${todayAbsen}</div><div class="lbl">Absen Hari Ini</div></div>
-    </div>
-    <div class="tabs">
-      <button class="tab-btn ${adminTab==='users'?'active':''}" onclick="swTab('users')"><i class="fas fa-users"></i> Pengguna</button>
-      <button class="tab-btn ${adminTab==='absen'?'active':''}" onclick="swTab('absen')"><i class="fas fa-calendar-check"></i> Data Absensi</button>
-    </div>
-    <div class="tab-panel ${adminTab==='users'?'active':''}" id="tp-users">${renderUsersTable(users)}</div>
-    <div class="tab-panel ${adminTab==='absen'?'active':''}" id="tp-absen">${renderAbsenTable(absensi,users)}</div>
-  </div>`;
+    el.innerHTML=`
+    <div class="admin-wrap">
+      <div class="stat-row">
+        <div class="stat-box"><div class="icon">👥</div><div class="num" style="color:var(--acc-h)">${total}</div><div class="lbl">Total Pengguna</div></div>
+        <div class="stat-box"><div class="icon">🎓</div><div class="num" style="color:var(--green)">${anggota}</div><div class="lbl">Anggota Aktif</div></div>
+        <div class="stat-box"><div class="icon">📋</div><div class="num" style="color:var(--amber)">${totalAbsen}</div><div class="lbl">Total Absensi</div></div>
+        <div class="stat-box"><div class="icon">📅</div><div class="num" style="color:var(--acc)">${todayAbsen}</div><div class="lbl">Absen Hari Ini</div></div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn ${adminTab==='users'?'active':''}" onclick="swTab('users')"><i class="fas fa-users"></i> Pengguna</button>
+        <button class="tab-btn ${adminTab==='absen'?'active':''}" onclick="swTab('absen')"><i class="fas fa-calendar-check"></i> Data Absensi</button>
+      </div>
+      <div class="tab-panel ${adminTab==='users'?'active':''}" id="tp-users">${renderUsersTable(users)}</div>
+      <div class="tab-panel ${adminTab==='absen'?'active':''}" id="tp-absen">${renderAbsenTable(absensi,users)}</div>
+    </div>`;
+  }catch(e){
+    el.innerHTML=`<div class="locked"><div class="locked-emoji">⚠️</div><h3>Gagal Memuat</h3><p>Tidak dapat terhubung ke database. Cek konfigurasi Supabase.</p></div>`;
+  }
 }
 
 function swTab(t){adminTab=t;renderAdmin()}
@@ -1171,33 +1347,38 @@ function renderAbsenTable(absensi,users){
   </div>`;
 }
 
-function addAlfaByAdmin(){
+async function addAlfaByAdmin(){
   const uid=document.getElementById('alfaUser')?.value;
   const date=document.getElementById('alfaDate')?.value;
   const status=document.getElementById('alfaStatus')?.value;
   if(!uid||!date){toast('Lengkapi semua field!','error');return;}
-  const users=getUsers();
-  const user=users.find(u=>u.id===uid);
-  if(!user){toast('Pengguna tidak ditemukan!','error');return;}
-  const absensi=getAbsensi();
-  if(absensi.find(a=>a.userId===uid&&a.date===date)){
-    toast(`${user.name} sudah punya catatan untuk tanggal ini!`,'error');return;
-  }
-  absensi.push({
-    id:'ab'+Date.now()+Math.random().toString(36).slice(2),
-    userId:uid,username:user.username,name:user.name,
-    date:date,timestamp:new Date(date+'T00:00:00').getTime(),
-    status:status,addedBy:'admin:'+currentUser.username
-  });
-  saveAbsensi(absensi);
-  toast(`${STATUS_LABELS[status]} berhasil ditambahkan untuk ${user.name}`,'success');
-  renderAdmin();
+  try{
+    const [users,absensi]=await Promise.all([getUsers(),getAbsensi()]);
+    const user=users.find(u=>u.id===uid);
+    if(!user){toast('Pengguna tidak ditemukan!','error');return;}
+    if(absensi.find(a=>a.userId===uid&&a.date===date)){
+      toast(`${user.name} sudah punya catatan untuk tanggal ini!`,'error');return;
+    }
+    const rec={
+      id:'ab'+Date.now()+Math.random().toString(36).slice(2),
+      userId:uid,username:user.username,name:user.name,
+      date:date,timestamp:new Date(date+'T00:00:00').getTime(),
+      status:status,addedBy:'admin:'+currentUser.username
+    };
+    const error=await addAbsensi(rec);
+    if(error){toast('Gagal menyimpan: '+(error.message||'Error'),'error');return;}
+    toast(`${STATUS_LABELS[status]} berhasil ditambahkan untuk ${user.name}`,'success');
+    renderAdmin();
+  }catch(e){toast('Gagal terhubung ke server!','error');}
 }
 
 function deleteAbsen(id){
-  confirm2('Hapus Catatan','Yakin ingin menghapus catatan absensi ini?',()=>{
-    const a=getAbsensi().filter(x=>x.id!==id);
-    saveAbsensi(a);toast('Catatan berhasil dihapus','success');renderAdmin();
+  confirm2('Hapus Catatan','Yakin ingin menghapus catatan absensi ini?',async()=>{
+    try{
+      const error=await deleteAbsensiById(id);
+      if(error){toast('Gagal menghapus: '+(error.message||'Error'),'error');return;}
+      toast('Catatan berhasil dihapus','success');renderAdmin();
+    }catch(e){toast('Gagal terhubung ke server!','error');}
   });
 }
 
@@ -1208,33 +1389,39 @@ function filterTbl(tableId,q){
 }
 
 function changeRole(uid,newRole){
-  const users=getUsers();
-  const idx=users.findIndex(x=>x.id===uid);
-  if(idx<0)return;
-  users[idx].role=newRole;saveUsers(users);
-  toast('Role diubah ke '+newRole,'success');renderAdmin();
+  confirm2('Ubah Role','Yakin mengubah role pengguna ini ke '+newRole+'?',async()=>{
+    try{
+      const error=await updateUserRole(uid,newRole);
+      if(error){toast('Gagal mengubah role: '+(error.message||'Error'),'error');return;}
+      toast('Role diubah ke '+newRole,'success');renderAdmin();
+    }catch(e){toast('Gagal terhubung ke server!','error');}
+  });
 }
 
 function deleteUser(uid,name){
   if(uid===currentUser.id){toast('Tidak bisa menghapus akun sendiri!','error');return;}
-  confirm2('Hapus Pengguna',`Yakin menghapus akun "${name}"?`,()=>{
-    saveUsers(getUsers().filter(x=>x.id!==uid));
-    saveAbsensi(getAbsensi().filter(a=>a.userId!==uid));
-    toast(`"${name}" berhasil dihapus`,'success');renderAdmin();
+  confirm2('Hapus Pengguna',`Yakin menghapus akun "${name}"?`,async()=>{
+    try{
+      const error=await deleteUserById(uid);
+      if(error){toast('Gagal menghapus: '+(error.message||'Error'),'error');return;}
+      toast(`"${name}" berhasil dihapus`,'success');renderAdmin();
+    }catch(e){toast('Gagal terhubung ke server!','error');}
   });
 }
 
-function exportCSV(){
-  const absensi=getAbsensi();
-  if(!absensi.length){toast('Belum ada data!','info');return;}
-  let csv='Nama,Username,Tanggal,Waktu,Status\n';
-  [...absensi].sort((a,b)=>b.timestamp-a.timestamp).forEach(a=>{
-    csv+=`"${a.name}","${a.username}","${fmtDate(a.date)}","${fmtTime(a.timestamp)}","${STATUS_LABELS[a.status]||a.status}"\n`;
-  });
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const link=document.createElement('a');link.href=url;link.download=`absensi_${todayStr()}.csv`;link.click();URL.revokeObjectURL(url);
-  toast('Export CSV berhasil!','success');
+async function exportCSV(){
+  try{
+    const absensi=await getAbsensi();
+    if(!absensi.length){toast('Belum ada data!','info');return;}
+    let csv='Nama,Username,Tanggal,Waktu,Status\n';
+    [...absensi].sort((a,b)=>b.timestamp-a.timestamp).forEach(a=>{
+      csv+=`"${a.name}","${a.username}","${fmtDate(a.date)}","${fmtTime(a.timestamp)}","${STATUS_LABELS[a.status]||a.status}"\n`;
+    });
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');link.href=url;link.download=`absensi_${todayStr()}.csv`;link.click();URL.revokeObjectURL(url);
+    toast('Export CSV berhasil!','success');
+  }catch(e){toast('Gagal export data!','error');}
 }
 
 /* ── MODAL HELPERS ── */
@@ -1285,11 +1472,17 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ── BOOT ── */
-initDB();
-checkSession();
+// Navbar & UI harus muncul dulu tanpa menunggu Supabase
 buildNav();
 buildActions();
 navigate('beranda');
+// Kemudian coba restore session dari Supabase di background
+(async()=>{
+  try{
+    initDB(); // show setup banner if needed
+    await checkSession(); // restore login jika ada session tersimpan
+  }catch(e){console.warn('Boot error:',e);}
+})();
 </script>
 </body>
 </html>
