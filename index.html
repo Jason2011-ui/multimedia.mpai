@@ -599,6 +599,243 @@ img {
   margin-top: 4px;
 }
 
+.home-visual-shell {
+  max-width: 1180px;
+  margin: 26px auto 0;
+  display: grid;
+  gap: 16px;
+  text-align: left;
+}
+
+.home-showcase-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.showcase-panel {
+  background: rgba(255,255,255,0.88);
+  border: 1px solid rgba(255,255,255,0.86);
+  border-radius: 24px;
+  padding: 18px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.showcase-panel.dark {
+  color: #fff;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(92,143,236,0.38), transparent 28%),
+    radial-gradient(circle at 84% 10%, rgba(239,68,68,0.28), transparent 26%),
+    linear-gradient(135deg, #111827 0%, #0f4ca8 55%, #172554 100%);
+  border-color: rgba(255,255,255,0.16);
+}
+
+.showcase-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.showcase-head h3 {
+  font-size: 1.02rem;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.showcase-head p {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+.showcase-panel.dark .showcase-head p {
+  color: rgba(255,255,255,0.72);
+}
+
+.showcase-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(8,101,228,0.08);
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.showcase-panel.dark .showcase-pill {
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+}
+
+.spotlight-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.spotlight-media {
+  min-height: 220px;
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08)),
+    rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.spotlight-media img,
+.spotlight-media video {
+  width: 100%;
+  height: 100%;
+  max-height: 340px;
+  object-fit: cover;
+  display: block;
+}
+
+.spotlight-empty {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: rgba(255,255,255,0.82);
+  padding: 24px;
+}
+
+.spotlight-empty i {
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.spotlight-copy h4 {
+  font-size: 1.35rem;
+  line-height: 1.25;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.spotlight-copy p {
+  color: rgba(255,255,255,0.78);
+  font-size: 0.84rem;
+  line-height: 1.55;
+  font-weight: 700;
+}
+
+.showcase-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.showcase-mini-card {
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: #fff;
+  padding: 10px;
+  min-width: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.showcase-mini-thumb {
+  aspect-ratio: 1.25;
+  border-radius: 14px;
+  background: rgba(8,101,228,0.06);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+  margin-bottom: 9px;
+}
+
+.showcase-mini-thumb img,
+.showcase-mini-thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.showcase-mini-card strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.showcase-mini-card span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.showcase-activity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.showcase-activity-card {
+  border-radius: 18px;
+  background: rgba(8,101,228,0.055);
+  border: 1px solid rgba(8,101,228,0.08);
+  padding: 13px;
+}
+
+.showcase-activity-card strong {
+  display: block;
+  font-size: 1.18rem;
+  font-weight: 900;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.showcase-activity-card span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.showcase-empty {
+  border-radius: 18px;
+  border: 1px dashed rgba(8,101,228,0.22);
+  background: rgba(8,101,228,0.04);
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px 18px;
+  font-size: 0.8rem;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.showcase-empty i {
+  color: var(--primary);
+  font-size: 1.4rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
 /* ── COMMON SECTION DESIGN ── */
 .section-header {
   margin-bottom: 24px;
@@ -892,6 +1129,88 @@ img {
   margin: 0 auto;
 }
 
+.gallery-showcase-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.gallery-hero-panel {
+  border-radius: 26px;
+  padding: 20px;
+  background:
+    radial-gradient(circle at 8% 20%, rgba(255,255,255,0.5), transparent 22%),
+    radial-gradient(circle at 92% 10%, rgba(16,185,129,0.2), transparent 28%),
+    linear-gradient(135deg, rgba(8,101,228,0.16), rgba(239,68,68,0.08)),
+    #fff;
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow: var(--shadow-md);
+  display: grid;
+  gap: 16px;
+}
+
+.gallery-hero-panel h3 {
+  font-size: 1.18rem;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.gallery-hero-panel p {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  font-weight: 700;
+  margin-top: 5px;
+}
+
+.gallery-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gallery-hero-stat {
+  border-radius: 16px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(255,255,255,0.8);
+  padding: 12px;
+}
+
+.gallery-hero-stat strong {
+  display: block;
+  font-size: 1.12rem;
+  font-weight: 900;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.gallery-hero-stat span {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.social-feed-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media(min-width: 860px) {
+  .social-feed-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.social-feed-grid .social-post {
+  height: fit-content;
+}
+
 .gallery-filter {
   display: flex;
   gap: 8px;
@@ -926,6 +1245,19 @@ img {
 .social-compose {
   border-color: rgba(8,101,228,0.16);
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.social-post.featured {
+  border-color: rgba(245,158,11,0.3);
+  background:
+    linear-gradient(180deg, rgba(255,251,235,0.72), rgba(255,255,255,0.98)),
+    #fff;
+  box-shadow: 0 14px 34px rgba(245,158,11,0.09);
+}
+
+.social-post.hidden {
+  opacity: 0.76;
+  border-style: dashed;
 }
 
 .social-compose textarea,
@@ -1053,6 +1385,16 @@ img {
   color: var(--primary);
   font-size: 0.68rem;
   font-weight: 900;
+}
+
+.social-badge.featured {
+  background: rgba(245,158,11,0.14);
+  color: #b45309;
+}
+
+.social-badge.hidden {
+  background: rgba(239,68,68,0.1);
+  color: var(--red);
 }
 
 .social-engagement {
@@ -2161,6 +2503,63 @@ img {
   object-fit: cover;
 }
 
+.portfolio-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 10px;
+}
+
+.portfolio-tile {
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.82);
+  overflow: hidden;
+  min-width: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.portfolio-tile-media {
+  aspect-ratio: 1.2;
+  background: rgba(8,101,228,0.06);
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+  overflow: hidden;
+}
+
+.portfolio-tile-media img,
+.portfolio-tile-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.portfolio-tile-body {
+  padding: 10px;
+}
+
+.portfolio-tile-body strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portfolio-tile-body span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  font-weight: 800;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .public-profile-modal {
   max-width: 760px;
   padding: 0;
@@ -2463,6 +2862,20 @@ img {
 }
 
 @media(min-width: 900px) {
+  .home-showcase-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    align-items: stretch;
+  }
+
+  .spotlight-card {
+    grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1fr);
+  }
+
+  .gallery-hero-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.7fr);
+    align-items: center;
+  }
+
   .absen-wrap {
     grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
     align-items: start;
@@ -3559,6 +3972,24 @@ tr:last-child td {
   .admin-quick-panel {
     grid-template-columns: 1fr;
   }
+
+  .home-visual-shell {
+    margin-top: 20px;
+  }
+
+  .showcase-head {
+    flex-direction: column;
+  }
+
+  .showcase-mini-grid,
+  .showcase-activity-grid,
+  .gallery-hero-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .spotlight-media {
+    min-height: 180px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -3823,13 +4254,13 @@ footer p {
   <div class="page-section active" id="page-beranda">
     <section class="hero">
       <div class="hero-glow"></div>
-      <div class="hero-tag"><i class="fa-solid fa-star"></i> Eskul Multimedia</div>
-      <h1>Kreativitas Digital<br><em>Tanpa Batas</em></h1>
-      <p class="hero-desc">Bergabunglah dengan komunitas kreatif Multimedia MTs Plus Al Ishlah — desain grafis, konten creator, multimedia, hingga sastra.</p>
+      <div class="hero-tag"><i class="fa-solid fa-star"></i> MM Visual Showcase</div>
+      <h1>Etalase Karya<br><em>Multimedia</em></h1>
+      <p class="hero-desc">Absensi, dokumentasi, profile, dan karya anak Multimedia MTs Plus Al Ishlah dalam satu ruang digital yang lebih hidup.</p>
       
       <div class="hero-btns">
-        <button class="primary" onclick="navigate('class')">Jelajahi Kelas <i class="fa-solid fa-compass"></i></button>
-        <button class="secondary" onclick="showOverlay('register')">Gabung <i class="fa-solid fa-user-plus"></i></button>
+        <button class="primary" onclick="navigate('gallery')">Lihat Karya <i class="fa-solid fa-images"></i></button>
+        <button class="secondary" onclick="currentUser?navigate('absensi'):showOverlay('register')">Gabung <i class="fa-solid fa-user-plus"></i></button>
       </div>
 
       <div class="stats-container">
@@ -3847,6 +4278,7 @@ footer p {
         </div>
       </div>
       <div id="homeSummaryContent"></div>
+      <div id="homeShowcaseContent"></div>
     </section>
   </div>
 
@@ -4021,9 +4453,9 @@ footer p {
   <div class="page-section" id="page-gallery">
     <section class="section">
       <div class="section-header">
-        <div class="section-tag">Karya & Kegiatan</div>
-        <h2 class="section-title">Galery MM</h2>
-        <p class="section-desc">Feed internal untuk dokumentasi Multimedia: upload file, like, komentar, dan share terarah.</p>
+        <div class="section-tag">Showcase Multimedia</div>
+        <h2 class="section-title">Karya MM</h2>
+        <p class="section-desc">Etalase dokumentasi, foto, video, dan desain anak Multimedia. Admin dapat memilih karya unggulan untuk Spotlight.</p>
       </div>
       <div id="galleryContent"></div>
     </section>
@@ -4412,7 +4844,10 @@ async function loadTypingLeaderboard(){
 
 async function getSocialFeed(){
   const sess=getSession();
-  const {data,error}=await callRpc('mm_get_social_feed',{p_token:sess?.token||''});
+  const token=sess?.token||'';
+  const showcase=await callRpc('mm_get_showcase_feed',{p_token:token});
+  if(!showcase.error&&Array.isArray(showcase.data))return showcase.data;
+  const {data,error}=await callRpc('mm_get_social_feed',{p_token:token});
   if(error)return[];
   return Array.isArray(data)?data:[];
 }
@@ -4425,6 +4860,17 @@ async function createSocialPost(caption,mediaUrl,category='dokumentasi'){
 async function deleteSocialPost(postId){
   const sess=getSession();
   return await callRpc('mm_delete_social_post',{p_token:sess?.token||'',p_post_id:postId});
+}
+
+async function updateSocialPostState(postId,featured,hidden,category=''){
+  const sess=getSession();
+  return await callRpc('mm_admin_update_social_post_state',{
+    p_token:sess?.token||'',
+    p_post_id:postId,
+    p_featured:!!featured,
+    p_hidden:!!hidden,
+    p_category:category||''
+  });
 }
 
 async function toggleSocialLike(postId){
@@ -4556,7 +5002,7 @@ const PAGES=[
   {id:'class',label:'Kelas',icon:'fa-graduation-cap'},
   {id:'tim',label:'Tim',icon:'fa-users'},
   {id:'sosmed',label:'Sosmed',icon:'fa-share-nodes'},
-  {id:'gallery',label:'Galery',icon:'fa-images'},
+  {id:'gallery',label:'Karya',icon:'fa-images'},
 ];
 
 function isDesktopView(){
@@ -4672,13 +5118,29 @@ async function updateHeroStats(){
     animNum('statAbsen',Number(counts.absensi||0));
   }catch(e){}
   renderHomeSummary();
+  renderHomeShowcase();
 }
 
 async function renderHomeSummary(){
   const el=document.getElementById('homeSummaryContent');
   if(!el)return;
   if(!currentUser){
-    el.innerHTML='';
+    el.innerHTML=`
+      <div class="summary-panel">
+        <div class="summary-card">
+          <h3>Masuk untuk Absensi</h3>
+          <p>Login sebagai anggota untuk melihat status absen hari ini, scan QR, dan mengelola profile portfolio.</p>
+          <div class="summary-actions">
+            <button onclick="showOverlay('login')"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button>
+            <button onclick="showOverlay('register')"><i class="fa-solid fa-user-plus"></i> Daftar</button>
+          </div>
+        </div>
+        <div class="summary-card">
+          <h3>Status Aplikasi</h3>
+          <p>Karya MM dan Showcase bisa dilihat sebagai inspirasi karya. Untuk interaksi like, komen, dan share, login terlebih dahulu.</p>
+          <span class="quick-status ${navigator.onLine!==false?'ok':'bad'}"><i class="fa-solid fa-wifi"></i> ${navigator.onLine!==false?'Online':'Offline'}</span>
+        </div>
+      </div>`;
     return;
   }
   el.innerHTML=skeletonBlock(1);
@@ -4706,7 +5168,7 @@ async function renderHomeSummary(){
           <p style="margin-top:6px">Terakhir: ${last?`${STATUS_LABELS[last.status]||last.status} - ${fmtDate(last.date)}`:'Belum ada riwayat absensi.'}</p>
           <div class="summary-actions">
             <button onclick="navigate('absensi')"><i class="fa-solid fa-calendar-days"></i> Absensi</button>
-            <button onclick="navigate('gallery')"><i class="fa-solid fa-images"></i> Galery</button>
+            <button onclick="navigate('gallery')"><i class="fa-solid fa-images"></i> Karya</button>
             <button onclick="navigate('profile')"><i class="fa-solid fa-user"></i> Profile</button>
           </div>
         </div>
@@ -4727,6 +5189,112 @@ async function renderHomeSummary(){
       </div>`;
   }
 }
+
+function renderShowcaseMedia(url,mode='mini'){
+  if(!url)return `<div class="${mode==='spotlight'?'spotlight-empty':'showcase-mini-thumb'}"><i class="fa-solid fa-image"></i></div>`;
+  const clean=String(url);
+  const safe=esc(clean);
+  const isVideo=/^data:video\//i.test(clean)||/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(clean);
+  const isImage=/^data:image\//i.test(clean)||/\.(png|jpe?g|gif|webp|avif|svg)(\?|#|$)/i.test(clean);
+  if(mode==='spotlight'){
+    if(isVideo)return `<video src="${safe}" controls playsinline preload="metadata"></video>`;
+    if(isImage||/^data:/i.test(clean))return `<img src="${safe}" alt="Spotlight MM" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='<div class=&quot;spotlight-empty&quot;><div><i class=&quot;fa-solid fa-image&quot;></i>Media tidak bisa dimuat</div></div>'">`;
+    return `<div class="spotlight-empty"><div><i class="fa-solid fa-paperclip"></i>Media lampiran</div></div>`;
+  }
+  if(isVideo)return `<video src="${safe}" muted playsinline preload="metadata"></video>`;
+  if(isImage||/^data:/i.test(clean))return `<img src="${safe}" alt="Karya MM" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='<i class=&quot;fa-solid fa-image&quot;></i>'">`;
+  return `<i class="fa-solid fa-paperclip"></i>`;
+}
+
+function renderShowcaseMiniCard(p){
+  const type=inferSocialType(p);
+  return `
+    <button class="showcase-mini-card" onclick="navigate('gallery')" title="${esc(p.caption||'Karya MM')}">
+      <div class="showcase-mini-thumb">${renderShowcaseMedia(p.mediaUrl,'mini')}</div>
+      <strong>${esc(p.caption||'Karya MM')}</strong>
+      <span>${esc(galleryFilterLabel(type))} oleh ${esc(p.name||'MM')}</span>
+    </button>`;
+}
+
+async function renderHomeShowcase(){
+  const el=document.getElementById('homeShowcaseContent');
+  if(!el)return;
+  el.innerHTML=skeletonBlock(2);
+  try{
+    const posts=(await getSocialFeed()).filter(p=>!p.hidden);
+    const featured=posts.find(p=>p.featured)||posts[0];
+    const latest=posts.filter(p=>!featured||p.id!==featured.id).slice(0,4);
+    const featuredMedia=featured
+      ?`<div class="spotlight-media">${renderShowcaseMedia(featured.mediaUrl,'spotlight')}</div>`
+      :`<div class="spotlight-empty"><div><i class="fa-solid fa-star"></i>Belum ada karya Spotlight. Admin dapat menandai postingan Karya MM sebagai Featured.</div></div>`;
+    const latestHtml=latest.length
+      ?latest.map(renderShowcaseMiniCard).join('')
+      :`<div class="showcase-empty"><i class="fa-solid fa-images"></i>Belum ada karya terbaru. Posting dokumentasi pertama dari halaman Karya MM.</div>`;
+    let todayCount='-';
+    let qrStatus=navigator.onLine!==false?'Online':'Offline';
+    if(currentUser){
+      try{
+        const absensi=await getAbsensi();
+        todayCount=absensi.filter(a=>a.date===todayStr()).length;
+        if(currentUser.role==='admin'){
+          const qr=await getDailyQr();
+          qrStatus=qr?.active?'QR aktif':'QR belum aktif';
+        }else{
+          const mine=absensi.find(a=>a.userId===currentUser.id&&a.date===todayStr());
+          qrStatus=mine?(STATUS_LABELS[mine.status]||mine.status):'Belum absen';
+        }
+      }catch(e){}
+    }
+    el.innerHTML=`
+      <div class="home-visual-shell">
+        <div class="home-showcase-grid">
+          <div class="showcase-panel dark">
+            <div class="showcase-head">
+              <div>
+                <h3>Spotlight MM</h3>
+                <p>Karya unggulan yang dipilih admin untuk tampil di Beranda.</p>
+              </div>
+              <span class="showcase-pill"><i class="fa-solid fa-star"></i> Featured</span>
+            </div>
+            <div class="spotlight-card">
+              ${featuredMedia}
+              <div class="spotlight-copy">
+                <h4>${featured?esc(featured.caption||'Karya unggulan MM'):'Pilih karya unggulan dari Karya MM'}</h4>
+                <p>${featured?`Oleh ${esc(featured.name||'Anggota MM')} - ${esc(galleryFilterLabel(inferSocialType(featured)))}`:'Setelah admin menekan Featured pada postingan, karya itu akan muncul sebagai wajah utama aplikasi.'}</p>
+              </div>
+            </div>
+          </div>
+          <div class="showcase-panel">
+            <div class="showcase-head">
+              <div>
+                <h3>Karya Terbaru</h3>
+                <p>Potongan dokumentasi dan karya yang baru masuk ke Karya MM.</p>
+              </div>
+              <span class="showcase-pill"><i class="fa-solid fa-bolt"></i> Live</span>
+            </div>
+            <div class="showcase-mini-grid">${latestHtml}</div>
+          </div>
+        </div>
+        <div class="showcase-panel">
+          <div class="showcase-head">
+            <div>
+              <h3>Aktif Hari Ini</h3>
+              <p>Ringkasan kecil agar Beranda terasa hidup tanpa membuka halaman admin.</p>
+            </div>
+            <button class="showcase-pill" onclick="navigate('absensi')"><i class="fa-solid fa-calendar-check"></i> Absensi</button>
+          </div>
+          <div class="showcase-activity-grid">
+            <div class="showcase-activity-card"><strong>${posts.length}</strong><span>Total Karya</span></div>
+            <div class="showcase-activity-card"><strong>${posts.filter(p=>p.featured).length}</strong><span>Featured</span></div>
+            <div class="showcase-activity-card"><strong>${todayCount}</strong><span>Absen Hari Ini</span></div>
+            <div class="showcase-activity-card"><strong>${esc(qrStatus)}</strong><span>Status</span></div>
+          </div>
+        </div>
+      </div>`;
+  }catch(e){
+    el.innerHTML=`<div class="home-visual-shell"><div class="showcase-empty"><i class="fa-solid fa-triangle-exclamation"></i>Showcase belum bisa dimuat. Coba refresh atau cek koneksi.</div></div>`;
+  }
+}
 function animNum(id,target){
   const el=document.getElementById(id);if(!el)return;
   let cur=0;const step=Math.ceil(target/20)||1;
@@ -4744,6 +5312,9 @@ async function renderGalleryFeed(){
   try{
     const posts=await getSocialFeed();
     const canPostGallery=currentUser&&(currentUser.role==='admin'||currentUser.role==='anggota');
+    const visiblePosts=currentUser?.role==='admin'?posts:posts.filter(p=>!p.hidden);
+    const featuredCount=visiblePosts.filter(p=>p.featured).length;
+    const hiddenCount=posts.filter(p=>p.hidden).length;
     const compose=canPostGallery?`
       <div class="social-compose">
         <textarea id="socialCaption" placeholder="Bagikan dokumentasi, karya, atau update kegiatan Multimedia..."></textarea>
@@ -4759,15 +5330,31 @@ async function renderGalleryFeed(){
           <input id="socialMediaFile" type="file" accept="image/*,video/*" onchange="updateSocialFileName()">
         </label>
         <input id="socialMediaUrl" placeholder="Atau tempel URL gambar/video opsional">
-        <button class="btn-primary" onclick="submitSocialPost()"><i class="fa-solid fa-paper-plane"></i> Posting ke Galery</button>
+        <button class="btn-primary" onclick="submitSocialPost()"><i class="fa-solid fa-paper-plane"></i> Posting ke Karya</button>
       </div>`:'';
     const filters=['semua','foto','video','desain'].map(f=>`
       <button class="${galleryFilter===f?'active':''}" onclick="setGalleryFilter('${f}')">${galleryFilterLabel(f)}</button>`).join('');
-    const filtered=posts.filter(matchGalleryFilter);
+    const filtered=visiblePosts.filter(matchGalleryFilter);
     const feed=filtered.length?filtered.map(renderSocialPost).join(''):`<div class="social-post" style="text-align:center;color:var(--text-light);font-size:0.85rem">Belum ada posting untuk filter ini.</div>`;
-    el.innerHTML=`<div class="social-layout">${compose}<div class="gallery-filter">${filters}</div>${feed}</div>`;
+    el.innerHTML=`
+      <div class="gallery-showcase-shell">
+        <div class="gallery-hero-panel">
+          <div>
+            <h3>Explore karya anak Multimedia</h3>
+            <p>Gunakan Karya MM sebagai portfolio kegiatan: dokumentasi, poster, foto, video, dan karya desain. Postingan Featured akan tampil di Spotlight Beranda.</p>
+          </div>
+          <div class="gallery-hero-stats">
+            <div class="gallery-hero-stat"><strong>${visiblePosts.length}</strong><span>Karya tampil</span></div>
+            <div class="gallery-hero-stat"><strong>${featuredCount}</strong><span>Featured</span></div>
+            <div class="gallery-hero-stat"><strong>${currentUser?.role==='admin'?hiddenCount:filtered.length}</strong><span>${currentUser?.role==='admin'?'Hidden':'Filter aktif'}</span></div>
+          </div>
+        </div>
+        ${compose}
+        <div class="gallery-filter">${filters}</div>
+        <div class="social-feed-grid">${feed}</div>
+      </div>`;
   }catch(e){
-    el.innerHTML=`<div class="locked"><div class="locked-icon" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i></div><h3>Gagal Memuat Galery</h3><p>Coba reload halaman.</p></div>`;
+    el.innerHTML=`<div class="locked"><div class="locked-icon" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i></div><h3>Gagal Memuat Karya</h3><p>Coba reload halaman.</p></div>`;
   }
 }
 
@@ -4809,10 +5396,12 @@ function renderSocialPost(p){
   const shares=Number(p.shares||0);
   const engagement=likes+commentCount+shares;
   const adminTools=currentUser?.role==='admin'?`<div class="social-admin-actions">
+    <button class="action-btn" title="${p.featured?'Lepas Featured':'Jadikan Featured'}" onclick="setSocialPostShowcaseState('${p.id}',${p.featured?'false':'true'},${p.hidden?'true':'false'},'${type}')"><i class="fa-solid fa-star"></i></button>
+    <button class="action-btn" title="${p.hidden?'Tampilkan postingan':'Sembunyikan postingan'}" onclick="setSocialPostShowcaseState('${p.id}',${p.featured?'true':'false'},${p.hidden?'false':'true'},'${type}')"><i class="fa-solid ${p.hidden?'fa-eye':'fa-eye-slash'}"></i></button>
     <button class="action-btn danger" title="Hapus postingan" onclick="removeSocialPost('${p.id}')"><i class="fa-solid fa-trash"></i></button>
   </div>`:'';
   return `
-    <article class="social-post" id="post-${p.id}">
+    <article class="social-post ${p.featured?'featured':''} ${p.hidden?'hidden':''}" id="post-${p.id}">
       <div class="social-post-head">
         <button class="social-post-avatar" onclick="openPublicProfile('${esc(p.userId||'')}')">${renderSmallAvatar(p.name,p.avatarUrl)}</button>
         <div class="social-post-head-main">
@@ -4824,6 +5413,8 @@ function renderSocialPost(p){
       </div>
       <div class="social-post-kicker">
         <span class="social-badge"><i class="fa-solid fa-layer-group"></i> ${galleryFilterLabel(type)}</span>
+        ${p.featured?`<span class="social-badge featured"><i class="fa-solid fa-star"></i> Featured</span>`:''}
+        ${p.hidden?`<span class="social-badge hidden"><i class="fa-solid fa-eye-slash"></i> Hidden</span>`:''}
         <span class="social-badge"><i class="fa-solid fa-chart-line"></i> Engagement ${engagement}</span>
       </div>
       <div class="social-caption">${esc(p.caption)}</div>
@@ -4890,7 +5481,7 @@ async function submitSocialPost(){
   }
   const {error}=await createSocialPost(caption,mediaUrl,category);
   if(error){toast(error.message||'Gagal posting.','error');return;}
-  toast('Posting Galery MM terkirim.','success');
+  toast('Posting Karya MM terkirim.','success');
   renderGalleryFeed();
 }
 
@@ -4915,7 +5506,7 @@ async function submitSocialComment(id){
 
 function openShareOptions(id){
   const url=location.origin+location.pathname+'#post-'+id;
-  const text='Lihat posting Galery MM ini: '+url;
+  const text='Lihat posting Karya MM ini: '+url;
   const overlay=document.createElement('div');
   overlay.className='overlay show';
   overlay.innerHTML=`
@@ -4935,13 +5526,13 @@ function openShareOptions(id){
 
 async function shareSocialPost(id,mode){
   const url=location.origin+location.pathname+'#post-'+id;
-  const text='Lihat posting Galery MM ini: '+url;
+  const text='Lihat posting Karya MM ini: '+url;
   const {error}=await addSocialShare(id);
   if(error){toast(error.message||'Gagal share.','error');return;}
   if(mode==='whatsapp'){
     window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
   }else if(mode==='native'&&navigator.share){
-    try{await navigator.share({title:'Galery MM',text:'Lihat posting Galery MM ini',url});}catch(e){}
+    try{await navigator.share({title:'Karya MM',text:'Lihat posting Karya MM ini',url});}catch(e){}
   }else{
     try{await navigator.clipboard.writeText(url);toast('Link postingan disalin.','success');}
     catch(e){toast('Share dicatat. Jika salin gagal, copy link dari modal.','info');}
@@ -4951,12 +5542,24 @@ async function shareSocialPost(id,mode){
   });
 }
 
+async function setSocialPostShowcaseState(id,featured,hidden,category){
+  const {error}=await updateSocialPostState(id,featured,hidden,category);
+  if(error){
+    toast(error.message||'Fitur Showcase belum aktif di Supabase. Jalankan SQL update Visual Showcase dulu.','error');
+    return;
+  }
+  toast(featured?'Postingan masuk Spotlight.':hidden?'Postingan disembunyikan.':'Status Showcase diperbarui.','success');
+  renderGalleryFeed();
+  renderHomeShowcase();
+}
+
 async function removeSocialPost(id){
-  confirm2('Hapus Postingan','Posting Galery MM ini akan dihapus beserta like, komentar, dan share.',async()=>{
+  confirm2('Hapus Postingan','Posting Karya MM ini akan dihapus beserta like, komentar, dan share.',async()=>{
     const {error}=await deleteSocialPost(id);
     if(error){toast(error.message||'Gagal menghapus postingan.','error');return;}
-    toast('Postingan Galery MM dihapus.','success');
+    toast('Postingan Karya MM dihapus.','success');
     renderGalleryFeed();
+    renderHomeShowcase();
   });
 }
 
@@ -4964,19 +5567,7 @@ async function openPublicProfile(userId){
   if(!userId){toast('Profile tidak ditemukan.','error');return;}
   const data=await getPublicProfile(userId);
   if(!data||data.error){toast(data?.error?.message||'Gagal memuat profile.','error');return;}
-  const posts=(data.posts||[]).map(p=>`
-    <div class="public-profile-post">
-      <strong>${esc(galleryFilterLabel(p.category||inferSocialType(p)))}</strong>
-      <p>${esc(p.caption||'Tanpa caption')}</p>
-      <p style="margin-top:8px;color:var(--text-light);font-size:0.68rem">${p.createdAt?new Date(p.createdAt).toLocaleDateString('id-ID'):'-'}</p>
-    </div>`).join('')||`
-    <div class="profile-picker-empty" style="grid-column:1 / -1">
-      <div>
-        <i class="fa-solid fa-images"></i>
-        <strong>Belum ada karya Galery</strong>
-        <p>Posting terbaru user ini akan muncul di sini.</p>
-      </div>
-    </div>`;
+  const posts=renderPortfolioStrip(data.posts||[],'Belum ada karya Karya MM');
   const statsHtml=renderProfileStats([
     {label:'Hadir',value:data.stats?.hadir||0},
     {label:'Izin',value:data.stats?.izin||0},
@@ -5002,7 +5593,7 @@ async function openPublicProfile(userId){
           </div>
         </div>
         ${statsHtml}
-        <h3 style="font-size:1rem;font-weight:900;margin:18px 0 0">Karya Galery Terbaru</h3>
+        <h3 style="font-size:1rem;font-weight:900;margin:18px 0 0">Portfolio Karya Terbaru</h3>
         <div class="public-profile-posts">${posts}</div>
       </div>
     </div>`;
@@ -5503,8 +6094,8 @@ function isStableProfileAvatarUrl(url){
 function getProfileAvatarNotice(url){
   const clean=String(url||'').trim();
   if(!clean)return '';
-  if(isProfileDataUrl(clean))return 'Foto profile lama memakai data upload langsung. Agar terlihat stabil di device lain, ganti dengan URL publik atau pilih foto dari Galery.';
-  if(clean.length>PROFILE_AVATAR_MAX_URL_CHARS)return 'URL foto terlalu panjang. Gunakan URL publik yang lebih pendek atau pilih foto dari Galery.';
+  if(isProfileDataUrl(clean))return 'Foto profile lama memakai data upload langsung. Agar terlihat stabil di device lain, ganti dengan URL publik atau pilih foto dari Karya MM.';
+  if(clean.length>PROFILE_AVATAR_MAX_URL_CHARS)return 'URL foto terlalu panjang. Gunakan URL publik yang lebih pendek atau pilih foto dari Karya MM.';
   return '';
 }
 
@@ -5519,10 +6110,35 @@ function renderProfileEmptyGallery(){
     <div class="profile-picker-empty">
       <div>
         <i class="fa-solid fa-images"></i>
-        <strong>Belum ada media Galery yang stabil</strong>
-        <p>Upload karya ke Galery memakai URL publik, atau tempel URL gambar/GIF langsung di form profile.</p>
+        <strong>Belum ada media Karya yang stabil</strong>
+        <p>Upload karya ke Karya MM memakai URL publik, atau tempel URL gambar/GIF langsung di form profile.</p>
       </div>
     </div>`;
+}
+
+function renderPortfolioTile(p){
+  const type=inferSocialType(p);
+  return `
+    <button class="portfolio-tile" onclick="navigate('gallery')" title="${esc(p.caption||'Karya MM')}">
+      <div class="portfolio-tile-media">${renderShowcaseMedia(p.mediaUrl,'mini')}</div>
+      <div class="portfolio-tile-body">
+        <strong>${esc(p.caption||'Karya MM')}</strong>
+        <span>${esc(galleryFilterLabel(type))}${p.featured?' - Featured':''}</span>
+      </div>
+    </button>`;
+}
+
+function renderPortfolioStrip(posts,emptyTitle='Belum ada karya'){
+  const visible=(posts||[]).filter(p=>!p.hidden).slice(0,6);
+  if(!visible.length)return `
+    <div class="profile-picker-empty" style="min-height:138px">
+      <div>
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <strong>${esc(emptyTitle)}</strong>
+        <p>Karya yang diposting ke Karya MM akan tampil sebagai portfolio kecil di profile.</p>
+      </div>
+    </div>`;
+  return `<div class="portfolio-strip">${visible.map(renderPortfolioTile).join('')}</div>`;
 }
 
 function chooseProfileGalleryAvatar(index){
@@ -5563,7 +6179,7 @@ async function previewProfileAvatarFile(){
     const fileData=await readProfileAvatarFile();
     if(fileData){
       setProfilePreview(fileData);
-      toast('Preview lokal saja. Agar terlihat di device lain, upload ke Galery dulu atau gunakan URL publik.','info');
+      toast('Preview lokal saja. Agar terlihat di device lain, upload ke Karya MM dulu atau gunakan URL publik.','info');
     }
   }catch(e){
     toast('Gagal membaca preview foto/GIF.','error');
@@ -5588,12 +6204,13 @@ async function renderProfile(){
     profileGalleryAvatarOptions=feed.filter(p=>isStableProfileAvatarUrl(p.mediaUrl)).slice(0,12);
     const avatarNotice=getProfileAvatarNotice(custom.avatarUrl);
     const galleryPicks=profileGalleryAvatarOptions.length?profileGalleryAvatarOptions.map((p,i)=>`
-      <button class="profile-gallery-pick ${custom.avatarUrl===p.mediaUrl?'active':''}" onclick="chooseProfileGalleryAvatar(${i})" title="${esc(p.caption||'Galery MM')}">
-        <img src="${esc(p.mediaUrl)}" alt="Pilihan foto Galery">
+      <button class="profile-gallery-pick ${custom.avatarUrl===p.mediaUrl?'active':''}" onclick="chooseProfileGalleryAvatar(${i})" title="${esc(p.caption||'Karya MM')}">
+        <img src="${esc(p.mediaUrl)}" alt="Pilihan foto Karya MM">
       </button>`).join(''):renderProfileEmptyGallery();
     const mine=absensi.filter(a=>a.userId===currentUser.id).sort((a,b)=>b.timestamp-a.timestamp);
     const count=status=>mine.filter(a=>a.status===status).length;
-    const postCount=feed.filter(p=>p.userId===currentUser.id).length;
+    const myPosts=feed.filter(p=>p.userId===currentUser.id);
+    const postCount=myPosts.filter(p=>!p.hidden).length;
     const statsHtml=renderProfileStats([
       {label:'Hadir',value:count('hadir')},
       {label:'Izin',value:count('izin')},
@@ -5635,9 +6252,13 @@ async function renderProfile(){
                 </div>
                 <div class="profile-username">@${esc(currentUser.username)}</div>
               </div>
-              <p class="profile-bio-text">${custom.bio?esc(custom.bio):'Tambahkan bio singkat agar profile kamu terlihat lebih hidup di Galery MM.'}</p>
+              <p class="profile-bio-text">${custom.bio?esc(custom.bio):'Tambahkan bio singkat agar profile kamu terlihat lebih hidup di Karya MM.'}</p>
               ${statsHtml}
             </div>
+          </div>
+          <div class="profile-card">
+            <h3 style="font-size:1rem;font-weight:900;margin-bottom:14px">Karya Saya</h3>
+            ${renderPortfolioStrip(myPosts,'Belum ada karya di profile')}
           </div>
           <div class="profile-card">
             <h3 style="font-size:1rem;font-weight:900;margin-bottom:14px">Validasi Catatan Absensi</h3>
@@ -5649,7 +6270,7 @@ async function renderProfile(){
           <div class="profile-editor-head">
             <div>
               <h3>Editor Profile</h3>
-              <p>Atur identitas yang tampil di Galery dan public profile. Gunakan URL publik atau pilih media Galery agar foto terlihat di device lain.</p>
+              <p>Atur identitas yang tampil di Karya MM dan public profile. Gunakan URL publik atau pilih media Karya agar foto terlihat di device lain.</p>
             </div>
             <span class="profile-editor-badge">Portfolio MM</span>
           </div>
@@ -5668,7 +6289,7 @@ async function renderProfile(){
             </div>
             <div class="profile-editor-fields">
               <div class="profile-field">
-                <label for="profileAvatarUrl">URL foto/GIF publik atau pilih dari Galery</label>
+                <label for="profileAvatarUrl">URL foto/GIF publik atau pilih dari Karya</label>
                 <input id="profileAvatarUrl" value="${esc(custom.avatarUrl||'')}" data-original-avatar="${esc(custom.avatarUrl||'')}" placeholder="Contoh: https://domain.com/foto.png" oninput="updateProfilePreviewFromInput()">
               </div>
               <div class="profile-field">
@@ -5680,13 +6301,13 @@ async function renderProfile(){
                 <input id="profileBio" value="${esc(custom.bio||'')}" maxlength="140" placeholder="Contoh: Editor video, desain, dokumentasi">
               </div>
               ${avatarNotice?`<div class="profile-info-box">${esc(avatarNotice)}</div>`:''}
-              <div class="profile-info-box"><i class="fa-solid fa-circle-info"></i> Upload langsung di Profile hanya preview lokal. Untuk dipakai lintas device, upload ke Galery atau gunakan URL publik.</div>
+              <div class="profile-info-box"><i class="fa-solid fa-circle-info"></i> Upload langsung di Profile hanya preview lokal. Untuk dipakai lintas device, upload ke Karya MM atau gunakan URL publik.</div>
             </div>
           </div>
 
           <div>
             <div class="profile-picker-head">
-              <label>Pilih dari Galery</label>
+              <label>Pilih dari Karya MM</label>
               <span>${profileGalleryAvatarOptions.length} media tersedia</span>
             </div>
             <div class="profile-gallery-picks">${galleryPicks}</div>
@@ -5726,15 +6347,15 @@ async function saveProfileCustomForm(){
   const hasLocalFile=!!document.getElementById('profileAvatarFile')?.files?.[0];
   try{
     if(hasLocalFile){
-      toast('File langsung di Profile tidak disimpan agar foto tetap terlihat di device lain. Gunakan URL publik atau pilih dari Galery.','error');
+      toast('File langsung di Profile tidak disimpan agar foto tetap terlihat di device lain. Gunakan URL publik atau pilih dari Karya MM.','error');
       return;
     }
     if(avatarUrl&&isProfileDataUrl(avatarUrl)&&avatarUrl!==originalAvatar){
-      toast('Data upload langsung tidak disimpan sebagai profile baru. Gunakan URL publik atau pilih dari Galery.','error');
+      toast('Data upload langsung tidak disimpan sebagai profile baru. Gunakan URL publik atau pilih dari Karya MM.','error');
       return;
     }
     if(avatarUrl&&avatarUrl.length>PROFILE_AVATAR_MAX_URL_CHARS&&avatarUrl!==originalAvatar){
-      toast('URL foto terlalu panjang. Gunakan URL publik yang lebih pendek atau pilih dari Galery.','error');
+      toast('URL foto terlalu panjang. Gunakan URL publik yang lebih pendek atau pilih dari Karya MM.','error');
       return;
     }
     if(avatarUrl&&!isProfileImageMedia(avatarUrl)){

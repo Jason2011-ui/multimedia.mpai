@@ -19,13 +19,16 @@ Fitur utama:
 10. Admin dapat rekap profile dan kehadiran.
 11. Admin dapat export data ke Excel.
 12. Admin dapat membuat QR harian otomatis.
-13. Admin dapat mengelola postingan Galery MM.
-14. Galery MM menyimpan dokumentasi kegiatan, foto, video, komentar, like, dan share.
+13. Admin dapat mengelola postingan Karya MM.
+14. Karya MM menyimpan dokumentasi kegiatan, foto, video, komentar, like, dan share.
 15. Tab Sosmed berisi link promosi sosial media resmi MM.
 16. Desktop memiliki fitur latihan mengetik 10FastFinger dan leaderboard.
 17. Mobile memakai navigasi bawah agar mudah digunakan.
 18. Desktop memakai navbar atas agar tampilan lebih rapi.
 19. Aplikasi mendukung PWA ringan sehingga dapat diinstall di Android setelah deploy HTTPS.
+20. Beranda memiliki MM Visual Showcase untuk menampilkan karya terbaru dan karya unggulan.
+21. Admin dapat memberi status Featured atau Hidden pada postingan Karya MM.
+22. Profile dan public profile menampilkan portfolio karya terbaru user.
 
 Alur absensi:
 1. Admin membuat QR atau kode harian di halaman Admin.
@@ -70,3 +73,4 @@ Keamanan aplikasi:
 Status terbaru:
 Aplikasi sudah mendukung show hide password, ulangi password saat daftar, QR hadir tanpa cek lokasi, fallback input kode QR manual, dan persiapan sinkron otomatis ke Google Spreadsheet lewat Apps Script.
 Aplikasi juga memiliki manifest dan service worker ringan untuk pengalaman install app di Android serta fallback sederhana saat koneksi offline.
+Aplikasi juga memiliki MM Visual Showcase. Untuk mengaktifkan Featured dan Hidden di Supabase, jalankan file supabase_visual_showcase_update.sql di SQL Editor. File ini aman untuk data lama karena hanya menambah kolom dan fungsi, tidak menghapus data.
