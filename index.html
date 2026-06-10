@@ -167,17 +167,18 @@ img {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .desktop-nav {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px;
+  gap: 2px;
   flex: 1;
-  margin: 0 12px;
+  margin: 0 8px;
   min-width: 0;
   max-width: none;
   overflow-x: auto;
@@ -189,22 +190,22 @@ img {
 }
 
 .desktop-nav-item {
-  min-height: 38px;
-  padding: 0 9px;
-  border-radius: 12px;
+  min-height: 34px;
+  padding: 0 8px;
+  border-radius: 11px;
   color: var(--text-muted);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 800;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 6px;
   transition: var(--transition);
   white-space: nowrap;
 }
 
-.admin-shortcut {
-  display: inline-flex;
+.desktop-nav-item i {
+  font-size: 0.78rem;
 }
 
 .desktop-nav-item:hover,
@@ -252,8 +253,10 @@ img {
 .user-chip {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 12px 6px 6px;
+  gap: 8px;
+  max-width: min(250px, 26vw);
+  min-width: 0;
+  padding: 5px 11px 5px 5px;
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 100px;
@@ -276,6 +279,14 @@ img {
   font-size: 0.8rem;
   font-weight: 700;
   line-height: 1.2;
+  max-width: 178px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-chip-info {
+  min-width: 0;
 }
 
 .chip-badge {
@@ -1695,6 +1706,13 @@ img {
   margin-top: 8px;
 }
 
+.profile-warning {
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #92400e;
+  padding: 10px 12px;
+}
+
 .profile-custom-title {
   display: flex;
   align-items: center;
@@ -2826,6 +2844,52 @@ tr:last-child td {
   }
 }
 
+@media (max-width: 1180px) and (min-width: 769px) {
+  .desktop-nav-item.optional-desktop {
+    width: 34px;
+    padding: 0;
+  }
+
+  .desktop-nav-item.optional-desktop span {
+    display: none;
+  }
+
+  .user-chip {
+    max-width: 190px;
+  }
+
+  .user-chip-info .uname {
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 980px) and (min-width: 769px) {
+  .logo-school {
+    display: none;
+  }
+
+  .desktop-nav {
+    margin: 0 6px;
+  }
+
+  .desktop-nav-item {
+    width: 34px;
+    padding: 0;
+  }
+
+  .desktop-nav-item span {
+    display: none;
+  }
+
+  .user-chip {
+    max-width: 132px;
+  }
+
+  .user-chip-info .uname {
+    max-width: 68px;
+  }
+}
+
 @media (max-width: 768px) {
   body {
     padding-bottom: 90px;
@@ -2836,9 +2900,6 @@ tr:last-child td {
     padding: 0 16px;
   }
   .desktop-nav {
-    display: none;
-  }
-  .admin-shortcut {
     display: none;
   }
   .user-chip-info {
@@ -4007,6 +4068,7 @@ function getVisiblePages(){
 
 function buildNav(){
   const pages=getVisiblePages();
+  const optionalDesktopIds=new Set(['admin','absensi','profile','typing']);
 
   const bottomNavHtml=pages.map(p=>`
     <button class="nav-item ${currentPage===p.id?'active':''}" onclick="navigate('${p.id}')">
@@ -4015,7 +4077,7 @@ function buildNav(){
     </button>`).join('');
 
   const desktopNavHtml=pages.map(p=>`
-    <button class="desktop-nav-item ${currentPage===p.id?'active':''}" onclick="navigate('${p.id}')">
+    <button class="desktop-nav-item ${currentPage===p.id?'active':''} ${optionalDesktopIds.has(p.id)?'optional-desktop':''}" onclick="navigate('${p.id}')" title="${esc(p.label)}" aria-label="${esc(p.label)}">
       <i class="fa-solid ${p.icon}"></i>
       <span>${p.label}</span>
     </button>`).join('');
@@ -4036,11 +4098,10 @@ function buildActions(){
   const colors={admin:'#8b5cf6',anggota:'#10b981',pengunjung:'#0865E4'};
   const roles={admin:'Admin',anggota:'Anggota',pengunjung:'Pengunjung'};
   el.innerHTML=`
-    ${currentUser.role==='admin'?`<button class="btn-ghost admin-shortcut ${currentPage==='admin'?'active':''}" onclick="navigate('admin')"><i class="fa-solid fa-toolbox"></i> Admin</button>`:''}
     <div class="user-chip">
       <div class="ava" style="background:${colors[currentUser.role]}">${initials}</div>
       <div class="user-chip-info">
-        <div class="uname">${currentUser.name}</div>
+        <div class="uname" title="${esc(currentUser.name)}">${esc(currentUser.name)}</div>
         <span class="chip-badge badge-${currentUser.role}">${roles[currentUser.role]}</span>
       </div>
     </div>
@@ -4816,6 +4877,7 @@ function initialsOf(name){
 }
 
 let profileGalleryAvatarOptions=[];
+const PROFILE_AVATAR_MAX_URL_CHARS=2200;
 
 function renderProfileAvatar(name,avatarUrl=''){
   return avatarUrl
@@ -4832,6 +4894,24 @@ function renderSmallAvatar(name,avatarUrl=''){
 function isProfileImageMedia(url){
   const clean=String(url||'');
   return /^data:image\//i.test(clean)||/\.(png|jpe?g|gif|webp|avif|svg)(\?|#|$)/i.test(clean);
+}
+
+function isProfileDataUrl(url){
+  return /^data:image\//i.test(String(url||''));
+}
+
+function isStableProfileAvatarUrl(url){
+  const clean=String(url||'').trim();
+  if(!clean||clean.length>PROFILE_AVATAR_MAX_URL_CHARS||isProfileDataUrl(clean))return false;
+  return /^(https?:\/\/|assets\/|\.\/assets\/|\/assets\/)/i.test(clean)&&isProfileImageMedia(clean);
+}
+
+function getProfileAvatarNotice(url){
+  const clean=String(url||'').trim();
+  if(!clean)return '';
+  if(isProfileDataUrl(clean))return 'Foto profile lama memakai data upload langsung. Agar terlihat stabil di device lain, ganti dengan URL publik atau pilih foto dari Galery.';
+  if(clean.length>PROFILE_AVATAR_MAX_URL_CHARS)return 'URL foto terlalu panjang. Gunakan URL publik yang lebih pendek atau pilih foto dari Galery.';
+  return '';
 }
 
 function chooseProfileGalleryAvatar(index){
@@ -4870,7 +4950,10 @@ function updateProfilePreviewFromInput(){
 async function previewProfileAvatarFile(){
   try{
     const fileData=await readProfileAvatarFile();
-    if(fileData)setProfilePreview(fileData);
+    if(fileData){
+      setProfilePreview(fileData);
+      toast('Preview lokal saja. Agar terlihat di device lain, upload ke Galery dulu atau gunakan URL publik.','info');
+    }
   }catch(e){
     toast('Gagal membaca preview foto/GIF.','error');
   }
@@ -4891,11 +4974,12 @@ async function renderProfile(){
   el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem"></i><p style="margin-top:12px;font-size:0.8rem">Memuat profile...</p></div>`;
   try{
     const [absensi,custom,feed]=await Promise.all([getAbsensi(),getProfileCustom(),getSocialFeed()]);
-    profileGalleryAvatarOptions=feed.filter(p=>isProfileImageMedia(p.mediaUrl)).slice(0,12);
+    profileGalleryAvatarOptions=feed.filter(p=>isStableProfileAvatarUrl(p.mediaUrl)).slice(0,12);
+    const avatarNotice=getProfileAvatarNotice(custom.avatarUrl);
     const galleryPicks=profileGalleryAvatarOptions.length?profileGalleryAvatarOptions.map((p,i)=>`
       <button class="profile-gallery-pick ${custom.avatarUrl===p.mediaUrl?'active':''}" onclick="chooseProfileGalleryAvatar(${i})" title="${esc(p.caption||'Galery MM')}">
         <img src="${esc(p.mediaUrl)}" alt="Pilihan foto Galery">
-      </button>`).join(''):`<p style="color:var(--text-light);font-size:0.78rem;font-weight:700">Belum ada foto/GIF dari Galery yang bisa dipilih.</p>`;
+      </button>`).join(''):`<p style="color:var(--text-light);font-size:0.78rem;font-weight:700">Belum ada URL foto/GIF Galery yang stabil. Gunakan URL publik gambar/GIF.</p>`;
     const mine=absensi.filter(a=>a.userId===currentUser.id).sort((a,b)=>b.timestamp-a.timestamp);
     const count=status=>mine.filter(a=>a.status===status).length;
     const log=mine.length===0
@@ -4949,18 +5033,20 @@ async function renderProfile(){
             </div>
             <div>
               <div class="profile-field">
-                <label for="profileAvatarUrl">URL foto/GIF profile</label>
-                <input id="profileAvatarUrl" value="${esc(custom.avatarUrl||'')}" placeholder="Tempel URL gambar/GIF atau pilih dari Galery" oninput="updateProfilePreviewFromInput()">
+                <label for="profileAvatarUrl">URL foto/GIF publik atau pilih dari Galery</label>
+                <input id="profileAvatarUrl" value="${esc(custom.avatarUrl||'')}" data-original-avatar="${esc(custom.avatarUrl||'')}" placeholder="Contoh: https://domain.com/foto.png" oninput="updateProfilePreviewFromInput()">
               </div>
               <div class="profile-field" style="margin-top:12px">
-                <label for="profileAvatarFile">Upload foto/GIF</label>
+                <label for="profileAvatarFile">Preview file lokal</label>
                 <input id="profileAvatarFile" type="file" accept="image/*,.gif" onchange="previewProfileAvatarFile()">
               </div>
               <div class="profile-field" style="margin-top:12px">
                 <label for="profileBio">Catatan profile</label>
                 <input id="profileBio" value="${esc(custom.bio||'')}" maxlength="140" placeholder="Contoh: Editor video, desain, dokumentasi">
               </div>
-              <p class="profile-help">Profile ini ikut muncul di Galery dan bisa dilihat saat user lain membuka profile kamu.</p>
+              <p class="profile-help">Profile ini ikut muncul di Galery dan bisa dilihat saat user lain membuka profile kamu. Untuk lintas device, gunakan URL publik atau pilih media Galery yang sudah berupa URL.</p>
+              ${avatarNotice?`<p class="profile-help profile-warning">${esc(avatarNotice)}</p>`:''}
+              <p class="profile-help profile-warning">Upload langsung di Profile hanya untuk preview lokal dan tidak disimpan. Jika ingin memakai file sendiri, upload dulu ke Galery lalu gunakan URL yang stabil.</p>
             </div>
           </div>
           <div style="margin-top:16px">
@@ -5007,11 +5093,24 @@ async function saveProfileName(){
 }
 
 async function saveProfileCustomForm(){
-  let avatarUrl=(document.getElementById('profileAvatarUrl')?.value||'').trim();
+  const avatarInput=document.getElementById('profileAvatarUrl');
+  let avatarUrl=(avatarInput?.value||'').trim();
+  const originalAvatar=(avatarInput?.dataset?.originalAvatar||'').trim();
   const bio=(document.getElementById('profileBio')?.value||'').trim();
+  const hasLocalFile=!!document.getElementById('profileAvatarFile')?.files?.[0];
   try{
-    const fileData=await readProfileAvatarFile();
-    if(fileData)avatarUrl=fileData;
+    if(hasLocalFile){
+      toast('File langsung di Profile tidak disimpan agar foto tetap terlihat di device lain. Gunakan URL publik atau pilih dari Galery.','error');
+      return;
+    }
+    if(avatarUrl&&isProfileDataUrl(avatarUrl)&&avatarUrl!==originalAvatar){
+      toast('Data upload langsung tidak disimpan sebagai profile baru. Gunakan URL publik atau pilih dari Galery.','error');
+      return;
+    }
+    if(avatarUrl&&avatarUrl.length>PROFILE_AVATAR_MAX_URL_CHARS&&avatarUrl!==originalAvatar){
+      toast('URL foto terlalu panjang. Gunakan URL publik yang lebih pendek atau pilih dari Galery.','error');
+      return;
+    }
     if(avatarUrl&&!isProfileImageMedia(avatarUrl)){
       toast('Gunakan URL gambar atau GIF yang valid.','error');
       return;
