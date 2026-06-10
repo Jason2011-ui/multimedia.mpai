@@ -1760,6 +1760,18 @@ img {
   gap: 18px;
 }
 
+.profile-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.profile-left-stack {
+  display: grid;
+  gap: 18px;
+}
+
 .profile-card.featured {
   position: relative;
   overflow: hidden;
@@ -1767,6 +1779,233 @@ img {
     radial-gradient(circle at top right, rgba(16,185,129,0.16), transparent 34%),
     linear-gradient(135deg, rgba(8,101,228,0.12), rgba(16,185,129,0.08)),
     #fff;
+}
+
+.profile-identity-card,
+.profile-editor-card {
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.profile-cover {
+  height: 132px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 18% 30%, rgba(255,255,255,0.48), transparent 22%),
+    radial-gradient(circle at 82% 20%, rgba(16,185,129,0.34), transparent 28%),
+    linear-gradient(135deg, #0f172a 0%, #0865e4 52%, #ef4444 100%);
+  position: relative;
+}
+
+.profile-identity-main {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+  padding: 0 18px 18px;
+  margin-top: -44px;
+  position: relative;
+}
+
+.profile-identity-main .profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 30px;
+  font-size: 1.18rem;
+  border-width: 4px;
+  box-shadow: 0 18px 34px rgba(15,23,42,0.18);
+}
+
+.profile-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-title-row h3 {
+  font-size: 1.18rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.profile-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(139,92,246,0.1);
+  color: var(--purple);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.profile-username {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.profile-bio-text {
+  max-width: 430px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.profile-mini-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.profile-mini-stat {
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(8,101,228,0.045);
+  border: 1px solid rgba(8,101,228,0.06);
+}
+
+.profile-mini-stat strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 1.18rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.profile-mini-stat span {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.profile-editor-card {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-editor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.profile-editor-head h3 {
+  font-size: 1rem;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.profile-editor-head p {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.profile-editor-badge {
+  border-radius: 999px;
+  background: rgba(16,185,129,0.12);
+  color: #047857;
+  padding: 7px 10px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.profile-editor-layout {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.profile-editor-fields {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.profile-info-box {
+  border-radius: 14px;
+  background: rgba(245,158,11,0.09);
+  color: #92400e;
+  padding: 11px 12px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.profile-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.profile-picker-head label {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.profile-picker-head span {
+  color: var(--text-light);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.profile-picker-empty {
+  width: 100%;
+  min-height: 126px;
+  border-radius: 18px;
+  border: 1px dashed rgba(8,101,228,0.24);
+  background: rgba(8,101,228,0.035);
+  color: var(--text-muted);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.profile-picker-empty i {
+  color: var(--primary);
+  font-size: 1.35rem;
+  margin-bottom: 8px;
+}
+
+.profile-picker-empty strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 0.88rem;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.profile-picker-empty p {
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.profile-save-btn {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 14px;
+  font-weight: 900;
+  margin-top: 2px;
 }
 
 .profile-hero {
@@ -1889,15 +2128,19 @@ img {
 }
 
 .profile-gallery-picks {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
-  gap: 8px;
+  display: flex;
+  gap: 10px;
   margin-top: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
 }
 
 .profile-gallery-pick {
+  width: 76px;
+  min-width: 76px;
   aspect-ratio: 1;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 2px solid transparent;
   background: #f8fafc;
   overflow: hidden;
@@ -1916,6 +2159,76 @@ img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.public-profile-modal {
+  max-width: 760px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.public-profile-cover {
+  height: 138px;
+  background:
+    radial-gradient(circle at 20% 25%, rgba(255,255,255,0.45), transparent 24%),
+    linear-gradient(135deg, #111827 0%, #0865e4 48%, #10b981 100%);
+}
+
+.public-profile-body {
+  padding: 0 22px 22px;
+}
+
+.public-profile-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: end;
+  margin-top: -46px;
+  margin-bottom: 18px;
+}
+
+.public-profile-head .profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 30px;
+  border-width: 4px;
+}
+
+.public-profile-head h2 {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
+.public-profile-posts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.public-profile-post {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(8,101,228,0.035);
+  padding: 12px;
+}
+
+.public-profile-post strong {
+  display: block;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.public-profile-post p {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .recap-grid,
@@ -2165,7 +2478,12 @@ img {
   }
 
   .profile-grid {
-    grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
+    grid-template-columns: minmax(320px, 0.85fr) minmax(420px, 1.15fr);
+    align-items: start;
+  }
+
+  .profile-shell {
+    grid-template-columns: minmax(320px, 0.85fr) minmax(420px, 1.15fr);
     align-items: start;
   }
 
@@ -3207,8 +3525,24 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 
+  .profile-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
   .profile-preview-frame {
     width: 104px;
+  }
+
+  .profile-editor-head,
+  .profile-picker-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .public-profile-head {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
   }
 
   .profile-custom-title {
@@ -4631,34 +4965,46 @@ async function openPublicProfile(userId){
   const data=await getPublicProfile(userId);
   if(!data||data.error){toast(data?.error?.message||'Gagal memuat profile.','error');return;}
   const posts=(data.posts||[]).map(p=>`
-    <div class="profile-log-item">
-      <div class="profile-log-top">
-        <strong>${esc(galleryFilterLabel(p.category||inferSocialType(p)))}</strong>
-        <span style="font-size:0.7rem;color:var(--text-muted);font-weight:800">${p.createdAt?new Date(p.createdAt).toLocaleDateString('id-ID'):'-'}</span>
+    <div class="public-profile-post">
+      <strong>${esc(galleryFilterLabel(p.category||inferSocialType(p)))}</strong>
+      <p>${esc(p.caption||'Tanpa caption')}</p>
+      <p style="margin-top:8px;color:var(--text-light);font-size:0.68rem">${p.createdAt?new Date(p.createdAt).toLocaleDateString('id-ID'):'-'}</p>
+    </div>`).join('')||`
+    <div class="profile-picker-empty" style="grid-column:1 / -1">
+      <div>
+        <i class="fa-solid fa-images"></i>
+        <strong>Belum ada karya Galery</strong>
+        <p>Posting terbaru user ini akan muncul di sini.</p>
       </div>
-      <div class="profile-log-note">${esc(p.caption||'-')}</div>
-    </div>`).join('')||`<p style="text-align:center;color:var(--text-light);font-size:0.8rem;padding:18px 0">Belum ada posting Galery.</p>`;
+    </div>`;
+  const statsHtml=renderProfileStats([
+    {label:'Hadir',value:data.stats?.hadir||0},
+    {label:'Izin',value:data.stats?.izin||0},
+    {label:'Sakit',value:data.stats?.sakit||0},
+    {label:'Posting',value:data.stats?.posts||0}
+  ]);
   const overlay=document.createElement('div');
   overlay.className='overlay show';
   overlay.innerHTML=`
-    <div class="modal" style="max-width:720px">
+    <div class="modal public-profile-modal">
       <button class="modal-close" onclick="this.closest('.overlay').remove()"><i class="fas fa-times"></i></button>
-      <div class="profile-hero" style="margin-bottom:18px">
-        ${renderProfileAvatar(data.name,data.avatarUrl)}
-        <div>
-          <h2 style="margin-bottom:2px">${esc(data.name)}</h2>
-          <p class="modal-sub" style="margin:0">@${esc(data.username)} - ${esc(data.role)}</p>
-          ${data.bio?`<p class="modal-sub" style="margin:4px 0 0">${esc(data.bio)}</p>`:''}
+      <div class="public-profile-cover"></div>
+      <div class="public-profile-body">
+        <div class="public-profile-head">
+          ${renderProfileAvatar(data.name,data.avatarUrl)}
+          <div>
+            <div class="profile-title-row" style="justify-content:flex-start">
+              <h2>${esc(data.name)}</h2>
+              <span class="profile-role-badge"><i class="fa-solid fa-id-badge"></i> ${esc(data.role)}</span>
+            </div>
+            <div class="profile-username">@${esc(data.username)}</div>
+            <p class="profile-bio-text" style="margin-top:8px">${data.bio?esc(data.bio):'User ini belum menambahkan bio profile.'}</p>
+          </div>
         </div>
+        ${statsHtml}
+        <h3 style="font-size:1rem;font-weight:900;margin:18px 0 0">Karya Galery Terbaru</h3>
+        <div class="public-profile-posts">${posts}</div>
       </div>
-      <div class="recap-grid" style="margin-bottom:16px">
-        <div class="recap-box"><strong>${data.stats?.hadir||0}</strong><span>Hadir</span></div>
-        <div class="recap-box"><strong>${data.stats?.izin||0}</strong><span>Izin</span></div>
-        <div class="recap-box"><strong>${data.stats?.sakit||0}</strong><span>Sakit</span></div>
-        <div class="recap-box"><strong>${data.stats?.posts||0}</strong><span>Posting</span></div>
-      </div>
-      <h3 style="font-size:1rem;font-weight:800;margin-bottom:10px">Posting Galery Terbaru</h3>
-      <div class="profile-log" style="max-height:320px;overflow:auto">${posts}</div>
     </div>`;
   document.body.appendChild(overlay);
 }
@@ -5162,6 +5508,23 @@ function getProfileAvatarNotice(url){
   return '';
 }
 
+function renderProfileStats(stats){
+  return `<div class="profile-mini-stats">
+    ${stats.map(s=>`<div class="profile-mini-stat"><strong>${esc(s.value)}</strong><span>${esc(s.label)}</span></div>`).join('')}
+  </div>`;
+}
+
+function renderProfileEmptyGallery(){
+  return `
+    <div class="profile-picker-empty">
+      <div>
+        <i class="fa-solid fa-images"></i>
+        <strong>Belum ada media Galery yang stabil</strong>
+        <p>Upload karya ke Galery memakai URL publik, atau tempel URL gambar/GIF langsung di form profile.</p>
+      </div>
+    </div>`;
+}
+
 function chooseProfileGalleryAvatar(index){
   const item=profileGalleryAvatarOptions[index];
   if(!item)return;
@@ -5227,9 +5590,16 @@ async function renderProfile(){
     const galleryPicks=profileGalleryAvatarOptions.length?profileGalleryAvatarOptions.map((p,i)=>`
       <button class="profile-gallery-pick ${custom.avatarUrl===p.mediaUrl?'active':''}" onclick="chooseProfileGalleryAvatar(${i})" title="${esc(p.caption||'Galery MM')}">
         <img src="${esc(p.mediaUrl)}" alt="Pilihan foto Galery">
-      </button>`).join(''):`<p style="color:var(--text-light);font-size:0.78rem;font-weight:700">Belum ada URL foto/GIF Galery yang stabil. Gunakan URL publik gambar/GIF.</p>`;
+      </button>`).join(''):renderProfileEmptyGallery();
     const mine=absensi.filter(a=>a.userId===currentUser.id).sort((a,b)=>b.timestamp-a.timestamp);
     const count=status=>mine.filter(a=>a.status===status).length;
+    const postCount=feed.filter(p=>p.userId===currentUser.id).length;
+    const statsHtml=renderProfileStats([
+      {label:'Hadir',value:count('hadir')},
+      {label:'Izin',value:count('izin')},
+      {label:'Sakit',value:count('sakit')},
+      {label:'Posting',value:postCount}
+    ]);
     const log=mine.length===0
       ?`<p style="text-align:center;color:var(--text-light);font-size:0.8rem;padding:24px 0">Belum ada catatan absensi.</p>`
       :mine.slice(0,15).map(a=>{
@@ -5252,69 +5622,77 @@ async function renderProfile(){
       }).join('');
 
     el.innerHTML=`
-      <div class="profile-grid">
-        <div class="profile-card featured">
-          <div class="profile-hero">
-            ${renderProfileAvatar(currentUser.name,custom.avatarUrl)}
-            <div>
-              <h3>${esc(currentUser.name)}</h3>
-              <p>@${esc(currentUser.username)} - ${esc(currentUser.role)}</p>
-              ${custom.bio?`<p>${esc(custom.bio)}</p>`:''}
+      <div class="profile-shell">
+        <div class="profile-left-stack">
+          <div class="profile-card featured profile-identity-card">
+            <div class="profile-cover"></div>
+            <div class="profile-identity-main">
+              ${renderProfileAvatar(currentUser.name,custom.avatarUrl)}
+              <div>
+                <div class="profile-title-row">
+                  <h3>${esc(currentUser.name)}</h3>
+                  <span class="profile-role-badge"><i class="fa-solid fa-id-badge"></i> ${esc(currentUser.role)}</span>
+                </div>
+                <div class="profile-username">@${esc(currentUser.username)}</div>
+              </div>
+              <p class="profile-bio-text">${custom.bio?esc(custom.bio):'Tambahkan bio singkat agar profile kamu terlihat lebih hidup di Galery MM.'}</p>
+              ${statsHtml}
             </div>
           </div>
-          <div class="profile-form-row">
-            <div class="profile-field">
-              <label for="profileName">Edit nama tampilan</label>
-              <input id="profileName" value="${esc(currentUser.name)}" maxlength="60">
-            </div>
-            <button class="btn-primary" style="height:42px;border-radius:12px;font-weight:800" onclick="saveProfileName()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+          <div class="profile-card">
+            <h3 style="font-size:1rem;font-weight:900;margin-bottom:14px">Validasi Catatan Absensi</h3>
+            <div class="profile-log">${log}</div>
           </div>
         </div>
-        <div class="profile-card">
-          <div class="profile-custom-title">
-            <h3>Custom Profile</h3>
-            <span>Foto, GIF, atau karya</span>
+
+        <div class="profile-card profile-editor-card">
+          <div class="profile-editor-head">
+            <div>
+              <h3>Editor Profile</h3>
+              <p>Atur identitas yang tampil di Galery dan public profile. Gunakan URL publik atau pilih media Galery agar foto terlihat di device lain.</p>
+            </div>
+            <span class="profile-editor-badge">Portfolio MM</span>
           </div>
-          <div class="profile-custom-layout">
+
+          <div class="profile-form-row">
+            <div class="profile-field">
+              <label for="profileName">Nama tampilan</label>
+              <input id="profileName" value="${esc(currentUser.name)}" maxlength="60">
+            </div>
+            <button class="btn-primary" style="height:42px;border-radius:12px;font-weight:900" onclick="saveProfileName()"><i class="fa-solid fa-floppy-disk"></i> Simpan Nama</button>
+          </div>
+
+          <div class="profile-editor-layout">
             <div class="profile-preview-frame" id="profilePreviewFrame">
               ${custom.avatarUrl?`<img src="${esc(custom.avatarUrl)}" alt="Preview profile" onerror="this.remove();this.parentElement.textContent='${initialsOf(currentUser.name)}'">`:initialsOf(currentUser.name)}
             </div>
-            <div>
+            <div class="profile-editor-fields">
               <div class="profile-field">
                 <label for="profileAvatarUrl">URL foto/GIF publik atau pilih dari Galery</label>
                 <input id="profileAvatarUrl" value="${esc(custom.avatarUrl||'')}" data-original-avatar="${esc(custom.avatarUrl||'')}" placeholder="Contoh: https://domain.com/foto.png" oninput="updateProfilePreviewFromInput()">
               </div>
-              <div class="profile-field" style="margin-top:12px">
+              <div class="profile-field">
                 <label for="profileAvatarFile">Preview file lokal</label>
                 <input id="profileAvatarFile" type="file" accept="image/*,.gif" onchange="previewProfileAvatarFile()">
               </div>
-              <div class="profile-field" style="margin-top:12px">
+              <div class="profile-field">
                 <label for="profileBio">Catatan profile</label>
                 <input id="profileBio" value="${esc(custom.bio||'')}" maxlength="140" placeholder="Contoh: Editor video, desain, dokumentasi">
               </div>
-              <p class="profile-help">Profile ini ikut muncul di Galery dan bisa dilihat saat user lain membuka profile kamu. Untuk lintas device, gunakan URL publik atau pilih media Galery yang sudah berupa URL.</p>
-              ${avatarNotice?`<p class="profile-help profile-warning">${esc(avatarNotice)}</p>`:''}
-              <p class="profile-help profile-warning">Upload langsung di Profile hanya untuk preview lokal dan tidak disimpan. Jika ingin memakai file sendiri, upload dulu ke Galery lalu gunakan URL yang stabil.</p>
+              ${avatarNotice?`<div class="profile-info-box">${esc(avatarNotice)}</div>`:''}
+              <div class="profile-info-box"><i class="fa-solid fa-circle-info"></i> Upload langsung di Profile hanya preview lokal. Untuk dipakai lintas device, upload ke Galery atau gunakan URL publik.</div>
             </div>
           </div>
-          <div style="margin-top:16px">
-            <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Pilih dari Galery</label>
+
+          <div>
+            <div class="profile-picker-head">
+              <label>Pilih dari Galery</label>
+              <span>${profileGalleryAvatarOptions.length} media tersedia</span>
+            </div>
             <div class="profile-gallery-picks">${galleryPicks}</div>
           </div>
-          <button class="btn-primary" style="height:42px;border-radius:12px;font-weight:800;margin-top:14px" onclick="saveProfileCustomForm()"><i class="fa-solid fa-image"></i> Simpan Profile</button>
-        </div>
-        <div class="profile-card">
-          <h3 style="font-size:1rem;font-weight:800;margin-bottom:14px">Rekap Kehadiran</h3>
-          <div class="recap-grid">
-            <div class="recap-box"><strong>${count('hadir')}</strong><span>Hadir</span></div>
-            <div class="recap-box"><strong>${count('izin')}</strong><span>Izin</span></div>
-            <div class="recap-box"><strong>${count('sakit')}</strong><span>Sakit</span></div>
-            <div class="recap-box"><strong>${count('alfa')}</strong><span>Alfa</span></div>
-          </div>
-        </div>
-        <div class="profile-card" style="grid-column:1 / -1">
-          <h3 style="font-size:1rem;font-weight:800;margin-bottom:14px">Validasi Catatan Absensi</h3>
-          <div class="profile-log">${log}</div>
+
+          <button class="btn-primary profile-save-btn" onclick="saveProfileCustomForm()"><i class="fa-solid fa-image"></i> Simpan Profile</button>
         </div>
       </div>`;
   }catch(e){
