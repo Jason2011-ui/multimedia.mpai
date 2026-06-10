@@ -1,0 +1,25 @@
+{
+  "name": "Multimedia MTs Plus Al Ishlah",
+  "short_name": "MM Absensi",
+  "description": "Absensi digital, Galery, Profile, dan latihan Multimedia MTs Plus Al Ishlah.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3e4e4",
+  "theme_color": "#f3e4e4",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/mm-logo-identity.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/mm-logo-identity.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

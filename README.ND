@@ -25,6 +25,7 @@ Fitur utama:
 16. Desktop memiliki fitur latihan mengetik 10FastFinger dan leaderboard.
 17. Mobile memakai navigasi bawah agar mudah digunakan.
 18. Desktop memakai navbar atas agar tampilan lebih rapi.
+19. Aplikasi mendukung PWA ringan sehingga dapat diinstall di Android setelah deploy HTTPS.
 
 Alur absensi:
 1. Admin membuat QR atau kode harian di halaman Admin.
@@ -68,3 +69,4 @@ Keamanan aplikasi:
 
 Status terbaru:
 Aplikasi sudah mendukung show hide password, ulangi password saat daftar, QR hadir tanpa cek lokasi, fallback input kode QR manual, dan persiapan sinkron otomatis ke Google Spreadsheet lewat Apps Script.
+Aplikasi juga memiliki manifest dan service worker ringan untuk pengalaman install app di Android serta fallback sederhana saat koneksi offline.

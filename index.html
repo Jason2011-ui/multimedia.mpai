@@ -9,6 +9,10 @@
 <meta property="og:image" content="assets/mm-logo-identity.png"/>
 <link rel="icon" type="image/png" href="assets/mm-logo-identity.png"/>
 <link rel="apple-touch-icon" href="assets/mm-logo-identity.png"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="MM Absensi"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -318,6 +322,38 @@ img {
 .btn-logout:hover {
   background: var(--red);
   color: #fff;
+}
+
+.connection-pill {
+  min-height: 32px;
+  border-radius: 999px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.68rem;
+  font-weight: 850;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.72);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.connection-pill.online {
+  color: #047857;
+  background: rgba(16,185,129,0.1);
+}
+
+.connection-pill.offline {
+  color: #b91c1c;
+  background: rgba(239,68,68,0.1);
+}
+
+.connection-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 /* ── BOTTOM NAVIGATION BAR ── */
@@ -1069,6 +1105,122 @@ img {
   font-weight: 800;
   margin-bottom: 12px;
   word-break: break-all;
+}
+
+.summary-panel,
+.admin-quick-panel {
+  display: grid;
+  gap: 14px;
+  margin: 22px auto 0;
+  max-width: 980px;
+}
+
+.summary-panel {
+  grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+}
+
+.summary-card,
+.admin-quick-card {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(255,255,255,0.82);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+}
+
+.summary-card h3,
+.admin-quick-card h3 {
+  font-size: 0.95rem;
+  font-weight: 850;
+  margin-bottom: 8px;
+}
+
+.summary-card p,
+.admin-quick-card p {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.summary-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.summary-actions button {
+  min-height: 36px;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: rgba(8,101,228,0.07);
+  color: var(--primary);
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.admin-quick-panel {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 0 18px;
+  max-width: none;
+}
+
+.admin-quick-card {
+  min-height: 116px;
+}
+
+.admin-quick-card strong {
+  display: block;
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.quick-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 0.68rem;
+  font-weight: 850;
+  margin-top: 10px;
+}
+
+.quick-status.ok {
+  background: var(--green-light);
+  color: #047857;
+}
+
+.quick-status.warn {
+  background: var(--amber-light);
+  color: #92400e;
+}
+
+.quick-status.bad {
+  background: var(--red-light);
+  color: #b91c1c;
+}
+
+.skeleton-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.skeleton-card {
+  min-height: 118px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.65), rgba(255,255,255,0.95), rgba(255,255,255,0.65));
+  background-size: 220% 100%;
+  border: 1px solid var(--border);
+  animation: shimmer 1.2s infinite linear;
+}
+
+@keyframes shimmer {
+  from { background-position: 220% 0; }
+  to { background-position: -220% 0; }
 }
 
 .social-actions {
@@ -2039,6 +2191,10 @@ img {
   .admin-stats {
     grid-template-columns: repeat(4, 1fr);
   }
+
+  .admin-quick-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .admin-stat-card {
@@ -2905,6 +3061,15 @@ tr:last-child td {
   .user-chip-info {
     display: none;
   }
+  .connection-pill {
+    min-width: 32px;
+    width: 32px;
+    justify-content: center;
+    padding: 0;
+  }
+  .connection-pill span:not(.connection-dot) {
+    display: none;
+  }
   .logo-name {
     font-size: 0.9rem;
   }
@@ -3054,6 +3219,11 @@ tr:last-child td {
   .recap-grid,
   .typing-stat-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-panel,
+  .admin-quick-panel {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -3342,6 +3512,7 @@ footer p {
           <div class="lbl">Absensi</div>
         </div>
       </div>
+      <div id="homeSummaryContent"></div>
     </section>
   </div>
 
@@ -3592,6 +3763,10 @@ const GOOGLE_SHEET_WEBHOOK_URL = ''; // Isi dengan URL Apps Script Web App agar 
 const _isConfigured = !SUPABASE_URL.includes('MASUKKAN') && !SUPABASE_KEY.includes('MASUKKAN');
 const _sb = _isConfigured ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 let sheetWebhookWarned=false;
+
+function skeletonBlock(count=2){
+  return `<div class="skeleton-stack">${Array.from({length:count}).map(()=>'<div class="skeleton-card"></div>').join('')}</div>`;
+}
 
 async function callRpc(fn,args={}){
   if(!_sb)return {data:null,error:{message:'Supabase belum dikonfigurasi'}};
@@ -4090,6 +4265,7 @@ function buildActions(){
   const el=document.getElementById('navActions');
   if(!currentUser){
     el.innerHTML=`
+      ${renderConnectionPill()}
       <button class="btn-ghost" onclick="showOverlay('login')">Masuk</button>
       <button class="btn-primary" onclick="showOverlay('register')">Daftar</button>`;
     return;
@@ -4098,6 +4274,7 @@ function buildActions(){
   const colors={admin:'#8b5cf6',anggota:'#10b981',pengunjung:'#0865E4'};
   const roles={admin:'Admin',anggota:'Anggota',pengunjung:'Pengunjung'};
   el.innerHTML=`
+    ${renderConnectionPill()}
     <div class="user-chip">
       <div class="ava" style="background:${colors[currentUser.role]}">${initials}</div>
       <div class="user-chip-info">
@@ -4106,6 +4283,22 @@ function buildActions(){
       </div>
     </div>
     <button class="btn-logout" onclick="doLogout()" title="Logout"><i class="fa-solid fa-sign-out-alt"></i></button>`;
+}
+
+function renderConnectionPill(){
+  const online=navigator.onLine!==false;
+  return `<div class="connection-pill ${online?'online':'offline'}" title="${online?'Online':'Offline'}"><span class="connection-dot"></span><span>${online?'Online':'Offline'}</span></div>`;
+}
+
+function refreshConnectionPills(){
+  document.querySelectorAll('.connection-pill').forEach(p=>{
+    const online=navigator.onLine!==false;
+    p.classList.toggle('online',online);
+    p.classList.toggle('offline',!online);
+    p.title=online?'Online':'Offline';
+    const label=p.querySelector('span:not(.connection-dot)');
+    if(label)label.textContent=online?'Online':'Offline';
+  });
 }
 
 let currentPage='beranda';
@@ -4144,6 +4337,61 @@ async function updateHeroStats(){
     animNum('statMembers',Number(counts.members||0));
     animNum('statAbsen',Number(counts.absensi||0));
   }catch(e){}
+  renderHomeSummary();
+}
+
+async function renderHomeSummary(){
+  const el=document.getElementById('homeSummaryContent');
+  if(!el)return;
+  if(!currentUser){
+    el.innerHTML='';
+    return;
+  }
+  el.innerHTML=skeletonBlock(1);
+  try{
+    const absensi=await getAbsensi();
+    const today=todayStr();
+    const mine=absensi.filter(a=>a.userId===currentUser.id);
+    const todayRec=mine.find(a=>a.date===today);
+    const statusLabel=todayRec?STATUS_LABELS[todayRec.status]||todayRec.status:'Belum absen';
+    const statusClass=todayRec?todayRec.status:'izin';
+    const last=mine.sort((a,b)=>b.timestamp-a.timestamp)[0];
+    const isAdmin=currentUser.role==='admin';
+    let qrText='Ikuti QR/code harian dari admin saat memilih Hadir.';
+    let qrBadge='<span class="quick-status warn"><i class="fa-solid fa-qrcode"></i> QR dicek saat absen</span>';
+    if(isAdmin){
+      const qr=await getDailyQr();
+      qrText=qr?.active?'QR harian aktif dan bisa ditampilkan ke siswa.':'Belum ada QR aktif hari ini.';
+      qrBadge=`<span class="quick-status ${qr?.active?'ok':'warn'}"><i class="fa-solid fa-qrcode"></i> ${qr?.active?'QR aktif':'QR belum aktif'}</span>`;
+    }
+    el.innerHTML=`
+      <div class="summary-panel">
+        <div class="summary-card">
+          <h3>Ringkasan Hari Ini</h3>
+          <p>Halo, ${esc(currentUser.name)}. Status kamu hari ini: <span class="sb sb-${statusClass}">${esc(statusLabel)}</span></p>
+          <p style="margin-top:6px">Terakhir: ${last?`${STATUS_LABELS[last.status]||last.status} - ${fmtDate(last.date)}`:'Belum ada riwayat absensi.'}</p>
+          <div class="summary-actions">
+            <button onclick="navigate('absensi')"><i class="fa-solid fa-calendar-days"></i> Absensi</button>
+            <button onclick="navigate('gallery')"><i class="fa-solid fa-images"></i> Galery</button>
+            <button onclick="navigate('profile')"><i class="fa-solid fa-user"></i> Profile</button>
+          </div>
+        </div>
+        <div class="summary-card">
+          <h3>Status QR dan Aplikasi</h3>
+          <p>${esc(qrText)}</p>
+          ${qrBadge}
+          <span class="quick-status ${navigator.onLine!==false?'ok':'bad'}"><i class="fa-solid fa-wifi"></i> ${navigator.onLine!==false?'Online':'Offline'}</span>
+        </div>
+      </div>`;
+  }catch(e){
+    el.innerHTML=`
+      <div class="summary-panel">
+        <div class="summary-card">
+          <h3>Ringkasan belum tersedia</h3>
+          <p>Data ringkasan gagal dimuat. Fitur utama tetap bisa dibuka dari navigasi.</p>
+        </div>
+      </div>`;
+  }
 }
 function animNum(id,target){
   const el=document.getElementById(id);if(!el)return;
@@ -4158,7 +4406,7 @@ let galleryFilter='semua';
 async function renderGalleryFeed(){
   const el=document.getElementById('galleryContent');
   if(!el)return;
-  el.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-light)"><i class="fas fa-spinner fa-spin"></i><p style="margin-top:10px;font-size:0.8rem">Memuat Galery MM...</p></div>`;
+  el.innerHTML=skeletonBlock(3);
   try{
     const posts=await getSocialFeed();
     const canPostGallery=currentUser&&(currentUser.role==='admin'||currentUser.role==='anggota');
@@ -4272,7 +4520,7 @@ function renderSocialMedia(url){
   const isVideo=/^data:video\//i.test(clean)||/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(clean);
   const isImage=/^data:image\//i.test(clean)||/\.(png|jpe?g|gif|webp|avif|svg)(\?|#|$)/i.test(clean);
   if(isVideo)return`<video class="social-media" src="${safe}" controls playsinline preload="metadata"></video>`;
-  if(isImage||/^data:/i.test(clean))return`<img class="social-media" src="${safe}" alt="Posting MM" onerror="this.style.display='none'">`;
+  if(isImage||/^data:/i.test(clean))return`<img class="social-media" src="${safe}" alt="Posting MM" loading="lazy" decoding="async" onerror="this.style.display='none'">`;
   return`<a class="social-attachment" href="${safe}" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i><span>${safe}</span></a>`;
 }
 
@@ -4971,7 +5219,7 @@ async function renderProfile(){
     return;
   }
 
-  el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem"></i><p style="margin-top:12px;font-size:0.8rem">Memuat profile...</p></div>`;
+  el.innerHTML=skeletonBlock(2);
   try{
     const [absensi,custom,feed]=await Promise.all([getAbsensi(),getProfileCustom(),getSocialFeed()]);
     profileGalleryAvatarOptions=feed.filter(p=>isStableProfileAvatarUrl(p.mediaUrl)).slice(0,12);
@@ -5313,9 +5561,15 @@ async function renderAdmin(){
     const anggota=users.filter(x=>x.role==='anggota').length;
     const totalAbsen=absensi.length;
     const todayAbsen=absensi.filter(a=>a.date===todayStr()).length;
+    const todayRecords=absensi.filter(a=>a.date===todayStr());
+    const pendingNotes=absensi.filter(a=>{
+      const meta=parseAttendanceMeta(a.addedBy);
+      return (a.status==='izin'||a.status==='sakit')&&String(meta.validation||'').includes('menunggu');
+    }).length;
 
     el.innerHTML=`
     <div class="admin-wrap">
+      ${renderAdminQuickDashboard(users,todayRecords,pendingNotes)}
       <div class="admin-stats">
         <div class="admin-stat-card">
           <div class="admin-stat-icon" style="background:var(--primary-glow);color:var(--primary)"><i class="fa-solid fa-users"></i></div>
@@ -5349,6 +5603,7 @@ async function renderAdmin(){
       <div class="tab-panel ${adminTab==='team'?'active':''}" id="tp-team">${renderTeamTable()}</div>
       <div class="tab-panel ${adminTab==='audit'?'active':''}" id="tp-audit">${renderAuditLogTable(auditLogs)}</div>
     </div>`;
+    setTimeout(()=>refreshAdminQuickSignals(),0);
     if(adminTab==='absen')setTimeout(()=>{showDailyQr(false);loadSheetWebhookConfig(false);},0);
   }catch(e){
     el.innerHTML=`
@@ -5361,6 +5616,70 @@ async function renderAdmin(){
 }
 
 function swTab(t){adminTab=t;renderAdmin()}
+
+function renderAdminQuickDashboard(users,todayRecords,pendingNotes){
+  const activeMembers=users.filter(u=>u.role==='anggota'||u.role==='admin').length;
+  const hadir=todayRecords.filter(a=>a.status==='hadir').length;
+  const notYet=Math.max(0,activeMembers-todayRecords.length);
+  const emptyText=todayRecords.length?'Data hari ini sudah mulai masuk.':'Belum ada absensi hari ini.';
+  return `
+    <div class="admin-quick-panel">
+      <div class="admin-quick-card">
+        <h3>Absensi Hari Ini</h3>
+        <strong>${hadir}/${activeMembers}</strong>
+        <p>${esc(emptyText)} Belum absen: ${notYet}.</p>
+        <span class="quick-status ${todayRecords.length?'ok':'warn'}"><i class="fa-solid fa-calendar-day"></i> ${todayStr()}</span>
+      </div>
+      <div class="admin-quick-card">
+        <h3>Validasi Catatan</h3>
+        <strong>${pendingNotes}</strong>
+        <p>Sakit/Izin yang masih perlu dicek admin.</p>
+        <span class="quick-status ${pendingNotes?'warn':'ok'}"><i class="fa-solid fa-clipboard-check"></i> ${pendingNotes?'Perlu dicek':'Aman'}</span>
+      </div>
+      <div class="admin-quick-card" id="quickQrCard">
+        <h3>QR Hari Ini</h3>
+        <strong>...</strong>
+        <p>Memeriksa status QR harian.</p>
+        <span class="quick-status warn"><i class="fa-solid fa-qrcode"></i> Memuat</span>
+      </div>
+      <div class="admin-quick-card" id="quickSheetCard">
+        <h3>Spreadsheet</h3>
+        <strong>...</strong>
+        <p>Memeriksa webhook Google Sheet.</p>
+        <span class="quick-status warn"><i class="fa-solid fa-table"></i> Memuat</span>
+      </div>
+    </div>`;
+}
+
+async function refreshAdminQuickSignals(){
+  if(!currentUser||currentUser.role!=='admin')return;
+  const qrCard=document.getElementById('quickQrCard');
+  const sheetCard=document.getElementById('quickSheetCard');
+  try{
+    const qr=await getDailyQr();
+    if(qrCard){
+      qrCard.innerHTML=`
+        <h3>QR Hari Ini</h3>
+        <strong>${qr?.active?'Aktif':'Belum'}</strong>
+        <p>${qr?.active?'QR harian siap dipakai siswa untuk Hadir.':'Buat QR jika ingin mewajibkan scan hari ini.'}</p>
+        <span class="quick-status ${qr?.active?'ok':'warn'}"><i class="fa-solid fa-qrcode"></i> ${qr?.active?'Aktif hari ini':'Belum aktif'}</span>`;
+    }
+  }catch(e){
+    if(qrCard)qrCard.innerHTML='<h3>QR Hari Ini</h3><strong>-</strong><p>Status QR belum bisa dibaca.</p><span class="quick-status warn"><i class="fa-solid fa-qrcode"></i> Cek manual</span>';
+  }
+  try{
+    const url=await getSheetWebhookUrl();
+    if(sheetCard){
+      sheetCard.innerHTML=`
+        <h3>Spreadsheet</h3>
+        <strong>${url?'Aktif':'Belum'}</strong>
+        <p>${url?'Absen baru akan dicoba sinkron ke Google Sheet.':'Data tetap aman di Supabase, tetapi belum otomatis masuk Sheet.'}</p>
+        <span class="quick-status ${url?'ok':'warn'}"><i class="fa-solid fa-table"></i> ${url?'Webhook aktif':'Webhook belum aktif'}</span>`;
+    }
+  }catch(e){
+    if(sheetCard)sheetCard.innerHTML='<h3>Spreadsheet</h3><strong>-</strong><p>Status webhook belum bisa dibaca.</p><span class="quick-status warn"><i class="fa-solid fa-table"></i> Cek manual</span>';
+  }
+}
 
 function renderUsersTable(users){
   const rows=users.map(u=>{
@@ -6088,6 +6407,13 @@ function toast(msg,type='info'){
   setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(-10px)';el.style.transition='all 0.3s';setTimeout(()=>el.remove(),300)},3000);
 }
 
+function registerPwaWorker(){
+  if(!('serviceWorker' in navigator))return;
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('service-worker.js').catch(err=>console.warn('Service worker gagal aktif:',err));
+  });
+}
+
 /* ── KEYBOARD INTERACTION ── */
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
@@ -6104,6 +6430,9 @@ document.addEventListener('keydown',e=>{
 buildNav();
 buildActions();
 navigate('beranda');
+registerPwaWorker();
+window.addEventListener('online',()=>{refreshConnectionPills();toast('Koneksi kembali online.','success');renderHomeSummary();});
+window.addEventListener('offline',()=>{refreshConnectionPills();toast('Koneksi offline. Beberapa data mungkin belum termuat.','info');renderHomeSummary();});
 window.addEventListener('resize',()=>{
   buildNav();
   if(currentPage==='typing'&&!isDesktopView())navigate('beranda');
